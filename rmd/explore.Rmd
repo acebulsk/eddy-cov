@@ -1,0 +1,103 @@
+---
+title: "Eddy Covariance Checks"
+author: "Alex Cebulski"
+date: "28/02/2022"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.height=2, fig.width=8)
+
+library(data.table)
+library(plotly)
+library(tidyverse)
+library(wxlogR)
+
+ec15 <- read.csv('../data/eddy_cov_15min_combined.csv')
+
+ecHF_names <- fread('../../field-downloads/fortress/hanging tree/hi freq/clean/TOA5_FRG.highfreq.dat', nrows = 2)[2,] %>% as.character()
+
+ecHF <- fread('../../field-downloads/fortress/hanging tree/hi freq/clean/TOA5_FRG.highfreq.dat', nrows = 10, skip = 4, col.names = ecHF_names)
+
+met <- wxlogR::load_CS_1000(path = '../../../field-downloads/fortress/hanging tree/towercr1000/71490_MET_30min_2022-02-14T17-39.dat')
+
+wnd_irtc <- wxlogR::load_CS_1000(path = '../../../field-downloads/fortress/hanging tree/treefort_1000x_Daily_2022_01_14.dat')
+
+met <- left_join(met, wnd_irtc, by = 'TIMESTAMP')
+```
+
+## 15 Minute EC Data
+
+```{r, echo=FALSE}
+ec_names <- names(ec15)[!names(ec15) %in% c("TIMESTAMP", "RECORD")]
+met_names <- names(met)[!names(met) %in% c("TIMESTAMP", "RECORD")]
+
+min_time <- max(c(min(ec15$TIMESTAMP), min(met$TIMESTAMP)))
+max_time <- min(c(max(ec15$TIMESTAMP), max(met$TIMESTAMP)))
+
+# inputPanel(
+#   selectInput(inputId = 'df1', label = 'Variable 1: ', choices = c('Eddy Covariance', 'Hydromet Data')),
+#   selectInput(inputId = 'df2', label = 'Variable 2: ', choices = c('Eddy Covariance', 'Hydromet Data'))
+# )
+# 
+# var1_choices <- reactive({
+#   req(input$df1)
+#   if_else(input$df1 == 'Eddy Covariance', ec_names, met_names)
+# })
+# 
+# var2_choices <- reactive({
+#     req(input$df2)
+#   if_else(input$df2 == 'Eddy Covariance', ec_names, met_names)
+# 
+# })
+
+
+inputPanel(
+  selectInput(inputId = 'var1', label = 'Variable 1: ', choices = ec_names, selected = "LE"),
+  selectInput(inputId = 'var2', label = 'Variable 2: ', choices = met_names, selected = "AirTC_Avg")
+)
+
+
+    renderUI({
+  sliderInput(inputId = "sliderTimeRange", label = "",
+              min = min_time,
+              max = max_time,
+              value = c(min_time,
+                        max_time),
+              step = 3600,
+              width = '100%',
+              height )
+})
+```
+
+
+```{r, echo=FALSE}
+ecFilter <-  reactive({
+  req(input$sliderTimeRange)
+
+  ec15 %>% filter(TIMESTAMP>= input$sliderTimeRange[1] & TIMESTAMP <= input$sliderTimeRange[2])
+})
+
+metFilter <-  reactive({
+  req(input$sliderTimeRange)
+
+  met %>%  filter(TIMESTAMP >= input$sliderTimeRange[1] & TIMESTAMP <= input$sliderTimeRange[2])
+})
+
+```
+
+
+```{r, echo=FALSE}
+renderPlotly(
+    plotly::ggplotly(
+      ggplot(data = ecFilter(), aes(x = TIMESTAMP)) +
+        geom_line(aes_string(y = input$var1)))
+  )
+
+renderPlotly(
+    plotly::ggplotly(
+      ggplot(data = metFilter(), aes(x = TIMESTAMP)) +
+        geom_line(aes_string(y = input$var2)))
+  )
+```
