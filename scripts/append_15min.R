@@ -12,3 +12,4 @@ ec3 <- wxlogR::load_CS_1000(path = '../../field-downloads/fortress/hanging tree/
 out <- rbind(ec1, ec2, ec3)
 
 write.csv(out, 'data/eddy_cov_15min_combined.csv')
+saveRDS(out, 'data/eddy_cov_15min_combined.rds')

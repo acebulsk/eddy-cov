@@ -8,33 +8,43 @@ runtime: shiny
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, fig.height=2, fig.width=8)
+setwd("~/local-usask/analysis/eddy-cov/rmd")
+
 
 library(data.table)
 library(plotly)
 library(tidyverse)
 library(wxlogR)
 
-ec15 <- read.csv('../data/eddy_cov_15min_combined.csv')
+ec15 <- readRDS('../data/eddy_cov_15min_combined.rds') 
 
-ecHF_names <- fread('../../field-downloads/fortress/hanging tree/hi freq/clean/TOA5_FRG.highfreq.dat', nrows = 2)[2,] %>% as.character()
+# ecHF1 <- wxlogR::load_CS_HF(path = '../../../field-downloads/fortress/hanging tree/hi freq/clean/TOA5_FRG_low_20220214.highfreq.dat')
 
-ecHF <- fread('../../field-downloads/fortress/hanging tree/hi freq/clean/TOA5_FRG.highfreq.dat', nrows = 10, skip = 4, col.names = ecHF_names)
+ecHF1 <- readRDS('../data/TOA5_FRG_low_20220214.highfreq.rds')
 
 met <- wxlogR::load_CS_1000(path = '../../../field-downloads/fortress/hanging tree/towercr1000/71490_MET_30min_2022-02-14T17-39.dat')
 
-wnd_irtc <- wxlogR::load_CS_1000(path = '../../../field-downloads/fortress/hanging tree/treefort_1000x_Daily_2022_01_14.dat')
+wnd_irtc <- wxlogR::load_CS_1000(path = '../../../field-downloads/fortress/hanging tree/treefort_1000x_Fifteen_2022_01_27.dat')
 
-met <- left_join(met, wnd_irtc, by = 'TIMESTAMP')
+met <- left_join(met, wnd_irtc, by = 'TIMESTAMP') 
 ```
 
 ## 15 Minute EC Data
 
 ```{r, echo=FALSE}
-ec_names <- names(ec15)[!names(ec15) %in% c("TIMESTAMP", "RECORD")]
-met_names <- names(met)[!names(met) %in% c("TIMESTAMP", "RECORD")]
+ec15_long <- ec15 %>% 
+  pivot_longer(!TIMESTAMP)
 
-min_time <- max(c(min(ec15$TIMESTAMP), min(met$TIMESTAMP)))
-max_time <- min(c(max(ec15$TIMESTAMP), max(met$TIMESTAMP)))
+met_long <- met %>% 
+  select(TIMESTAMP, where(is.numeric)) %>% 
+  pivot_longer(!TIMESTAMP)
+
+df <- rbind(ec15_long, met_long)
+
+col_names <- unique(df$name)
+
+min_time_15 <- max(c(min(ec15$TIMESTAMP), min(met$TIMESTAMP)))
+max_time_15 <- min(c(max(ec15$TIMESTAMP), max(met$TIMESTAMP)))
 
 # inputPanel(
 #   selectInput(inputId = 'df1', label = 'Variable 1: ', choices = c('Eddy Covariance', 'Hydromet Data')),
@@ -54,17 +64,16 @@ max_time <- min(c(max(ec15$TIMESTAMP), max(met$TIMESTAMP)))
 
 
 inputPanel(
-  selectInput(inputId = 'var1', label = 'Variable 1: ', choices = ec_names, selected = "LE"),
-  selectInput(inputId = 'var2', label = 'Variable 2: ', choices = met_names, selected = "AirTC_Avg")
+  selectInput(inputId = 'var1', label = 'Choose some variables: ', choices = col_names, selected = c("LE", "AirTC_Avg"), multiple = T),
 )
 
 
-    renderUI({
+renderUI({
   sliderInput(inputId = "sliderTimeRange", label = "",
-              min = min_time,
-              max = max_time,
-              value = c(min_time,
-                        max_time),
+              min = min_time_15,
+              max = max_time_15,
+              value = c(min_time_15,
+                        max_time_15),
               step = 3600,
               width = '100%',
               height )
@@ -73,31 +82,75 @@ inputPanel(
 
 
 ```{r, echo=FALSE}
-ecFilter <-  reactive({
+var1_df <-  reactive({
+  req(input$var1)
   req(input$sliderTimeRange)
-
-  ec15 %>% filter(TIMESTAMP>= input$sliderTimeRange[1] & TIMESTAMP <= input$sliderTimeRange[2])
-})
-
-metFilter <-  reactive({
-  req(input$sliderTimeRange)
-
-  met %>%  filter(TIMESTAMP >= input$sliderTimeRange[1] & TIMESTAMP <= input$sliderTimeRange[2])
+  
+  df %>% 
+    filter(name %in% input$var1,
+          TIMESTAMP >= input$sliderTimeRange[1] & TIMESTAMP <= input$sliderTimeRange[2])
 })
 
 ```
 
 
 ```{r, echo=FALSE}
-renderPlotly(
-    plotly::ggplotly(
-      ggplot(data = ecFilter(), aes(x = TIMESTAMP)) +
-        geom_line(aes_string(y = input$var1)))
-  )
+output$var1_plot <- renderPlot(
+      ggplot(data = var1_df(), aes(x = TIMESTAMP, y = value)) +
+        geom_line() +
+        facet_grid(rows = vars(name), scales = "free_y") +
+        theme(
+          axis.title.y = element_blank(),
+          axis.title.x = element_blank()
+        )
+)
 
-renderPlotly(
-    plotly::ggplotly(
-      ggplot(data = metFilter(), aes(x = TIMESTAMP)) +
-        geom_line(aes_string(y = input$var2)))
-  )
+renderUI({
+  plotOutput('var1_plot', height = length(input$var1)*150)
+})
+
+```
+
+# High Frequency EC Data
+
+```{r, echo=FALSE}
+
+hf_names <- names(ecHF1)[!names(ecHF1) %in% c("TIMESTAMP", "RECORD")]
+met_names <- names(met)[!names(met) %in% c("TIMESTAMP", "RECORD")]
+
+min_time <- max(c(min(ecHF1$TIMESTAMP), min(met$TIMESTAMP)))
+max_time <- min(c(max(ecHF1$TIMESTAMP), max(met$TIMESTAMP)))
+
+inputPanel(
+  selectInput(inputId = 'HFvar1', label = 'Variable 1: ', choices = hf_names),
+)
+
+
+    renderUI({
+  sliderInput(inputId = "sliderTimeRangeHF", label = "",
+              min = min_time,
+              max = max_time,
+              value = c(max_time - 3600*3,
+                        max_time),
+              step = 60,
+              width = '100%',
+              height )
+})
+```
+
+
+```{r, echo=FALSE}
+ecFilter <-  reactive({
+  req(input$sliderTimeRangeHF)
+
+  ecHF1 %>% filter(TIMESTAMP>= input$sliderTimeRangeHF[1] & TIMESTAMP <= input$sliderTimeRangeHF[2])
+})
+
+```
+
+
+```{r, echo=FALSE}
+renderPlot(
+      ggplot(data = ecFilter(), aes(x = TIMESTAMP)) +
+        geom_line(aes_string(y = input$HFvar1)))
 ```
