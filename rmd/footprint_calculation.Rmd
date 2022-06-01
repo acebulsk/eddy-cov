@@ -1,0 +1,55 @@
+---
+title: "Footprint Calculation"
+author: "Cebulski, A.C"
+date: "`r Sys.Date()`"
+output: html_document
+bibliography: [../../papers/bibtex/library.bib]
+csl: ../../papers/bibtex/apa.csl
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Formulas
+
+Calculate the footprint $X_f$ representative of these measurements that accounts for 80% of the flux. Where $U$ is the assumed constant wind speed, $u^{*}$ is the friction velocity, $d$ is the displacement height due to vegetation (taken as 2/3 the vegetation height), $z$ is the instrument height, $k$ is the von karmans constant (usually taken as 0.4) [@Schuepp1990]:
+
+$$
+X_f = - \frac{1}{ln f}\frac{U}{u^*}\frac{z-d}{k}
+$$ 
+Calculate Friction Velocity $u_*$, can be done using either two instrument heights, or a single and estimated roughness length of momentum @Stull2017:
+
+$$
+u_* = (\overline{u_2} - \overline{u_1})\  k\  ln(\frac{z_2 - d_0}{z_1 - d_0})^{-1} = \overline{u_1}\  k\ ln(\frac{z - d_0}{z_{0m}})^{-1}
+$$
+where $\overline{u}$ is the instrument wind speed at height $z$, $z_0$ is the aerodynamic roughness height (m, 0.1 of vegetation height), $z_{0m}$ is the roughness length of momentum (estimated from literature, e.g. [@Stull2017]):
+
+$$
+U = \frac{u^*[ln((z-d)/z_0)-1+z_0/(z-d)]}{k(1-z_0/(z-d))}
+$$ 
+## find the parameters $u^{∗}$, $Z_{0m}$, and $d_0$ of the logarithmic wind profile equation that best matches the measured data provided below:
+
+
+Constants:
+
+```{r}
+k <- 0.4 # von karmans constant (unitless) 
+z_0m <- 2 # centers of large towns and cities, irregular forests with scattered clearings @Stull2017
+d0 <- 0.7 # m 
+z1 <- 1 # m
+z2 <- 2 # m 
+u1 <- 0.3 # m s-1
+u2 <- 0.5 # m s-1
+```
+
+Calculate U:
+
+```{r}
+f <- 0.8 # 80%
+U_1 <- (u_star * (log((z1-d0)/z_0m) - 1 + z_0m/(z1-d0)))/(k*(1-z_0m/(z1-d0)))
+U_2 <- (u_star * (log((z2-d0)/z_0m) - 1 + z_0m/(z2-d0)))/(k*(1-z_0m/(z2-d0)))
+
+xf_1 <- -(1/log(f))*(U_1/u_star)*((z1-d0)/k)
+xf_2 <- -(1/log(f))*(U_2/u_star)*((z2-d0)/k)
+```

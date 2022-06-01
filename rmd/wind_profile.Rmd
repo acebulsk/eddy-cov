@@ -1,0 +1,134 @@
+---
+title: "Fortress Forest Wind Profile"
+author: "Cebulski, A.C"
+date: "`r Sys.Date()`"
+output: html_document
+bibliography: [../../papers/bibtex/library.bib]
+csl: ../../papers/bibtex/apa.csl
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r pkgs}
+library(tidyverse)
+```
+
+Return wind profile as in 836 assignment 4. feb14 - mar 4 US wind suspect.
+
+## Functions 
+
+```{r}
+# Shown in 836 tutorial
+
+fit_neutral_wind_CE836 <- function(uMeas, zHeight){
+  
+  loglinfun <- function(params){ # the input variable params must be the same length and dimension as the initial guesses (i.e. start points)
+    ustar <- params[[1]]
+    z_0m <- params[[2]]
+    d_0 <- params[[3]]
+    
+    FittedWspeed <- ustar/0.4*log((zHeight - d_0)/(z_0m)) # log-linear wind speed function
+    
+    obj_fn <- FittedWspeed - uMeas
+    SSE <- sum(obj_fn^2) # this is the sum square error, which is the value that we are trying to minimize. 
+    
+    #out <- list('SSE' = SSE, 'FittedWspeed' = FittedWspeed) # create list for multi arg return 
+    return(SSE) 
+  }
+  
+  # set initial guesses for friction velocity and roughness length
+  start_point <- c(0.5, 0.5, 0.5)
+  
+  parameter_estimates <- optim(par = start_point, fn = loglinfun)
+  
+  out <- list('par_est' = parameter_estimates, 'model' = loglinfun)
+  return(out)
+}
+
+# helper function to create df using params created from above
+loglinfun_returnwind <- function(params, zHeight){ # params must be the same length and dimension as the initial guesses (i.e. start points)
+  ustar <- params[[1]]
+  z_0m <- params[[2]]
+  d_0 <- params[[3]]
+  
+  FittedWspeed <- ustar/0.4*log((zHeight - d_0)/(z_0m)) # log-linear wind speed function
+  
+  return(FittedWspeed)
+}
+```
+
+```{r, include=F}
+# load ####
+
+low_wind <- readRDS('data/eddy_cov_15min_combined.rds') |> select(TIMESTAMP, low_ec_rslt_wnd_spd = result_wind_spd)
+
+mid_hi_wind <- readRDS('../../analysis/treefort-main/data/met/met_main.rds') |> select(TIMESTAMP, USWindSpeed_S_WVT, top_ec_rlst_wnd_spd)
+
+wnd <- left_join(low_wind, mid_hi_wind, by = 'TIMESTAMP') |> 
+  pivot_longer(low_ec_rslt_wnd_spd:top_ec_rlst_wnd_spd)
+
+ggplot(wnd, aes(TIMESTAMP, value, colour = name, group = name)) +
+  geom_point()
+
+plotly::ggplotly()
+
+# jan 16 looks good, confirmed no new snow with wingscape camera
+
+jan16 <- wnd |> filter(TIMESTAMP == as.POSIXct('2022-01-16 16:00:00', tz = 'CST'))
+
+# calculate instument heights (rough using lidar and measured SR50 height)
+sr50_ht <- 2.65
+cup <- 2083.757
+sr50_rel_ht <- 2082.255
+us_rel_ht <- cup - sr50_rel_ht
+us_ht <- sr50_ht +  us_rel_ht
+ec_top_asl <- 2093.151 
+ec_top_rel <- ec_top_asl - sr50_rel_ht
+ec_top <- ec_top_rel + sr50_ht
+
+jan16$height <- c(2, us_ht, ec_top)
+
+# plot measured ####
+ggplot(jan16) +
+  aes(value, height) +
+  geom_point()
+```
+
+## Simulated Wind Curve
+
+```{r}
+# simulated wind curve ####
+
+fitted_wind <- fit_neutral_wind_CE836(jan16$value, jan16$height)
+
+# Put estimated parameters in data frame
+est_pars <- data.frame(
+  ustar = fitted_wind$par_est$par[1],
+  
+  z_0m = fitted_wind$par_est$par[2],
+  
+  d_0 = fitted_wind$par_est$par[3]
+)
+est_pars
+
+mod_df <- data.frame(height_m = seq(est_pars$d_0+est_pars$z_0m, 25, 0.1))
+
+mod_df$value <- loglinfun_returnwind(c(est_pars$ustar, est_pars$z_0m, est_pars$d_0), mod_df$height_m)
+mod_df$group <- 'simulated'
+
+jan16fltr <- jan16 |> select(height_m = height, value) |> mutate(group = 'obs') |> as.data.frame()
+
+ggplot(rbind(mod_df, jan16fltr)) +
+  aes(value, height_m, colour = group) +
+  geom_point()
+
+all <- rbind(mod_df, jan16fltr)
+
+ggplot(data = all, aes(value, height_m, colour = group)) +
+  geom_line(data = subset(all, group == 'simulated')) +
+  geom_point(data = subset(all, group == 'obs')) 
+
+ggsave('figs/FFR_wind_profile.png', height = 5, width = 5)
+```  
