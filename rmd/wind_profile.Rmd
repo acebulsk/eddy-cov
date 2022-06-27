@@ -17,7 +17,19 @@ library(tidyverse)
 
 Return wind profile as in 836 assignment 4. feb14 - mar 4 US wind suspect.
 
+TODO: 
+- lower EC was raised winter 2022 need to fix in QAQC before applying across all dates
+- what is the difference in  "horiz_wind_spd" & "result_wind_spd"
+
 ## Functions 
+
+This script is based on this: 
+
+$$
+\overline{u} = \frac{u_*}{K} ln(\frac{z - d_0}{z_0})
+$$
+
+where $\overline{u}$ is average wind speed, $u_*$ is the friction velocity, $z$ is the instrument height, $d_0$ is the displacement height, $z_0$ is the roughness length of momentum for an average canopy-top height, and $k$ is the von Karmen Constant. See @Stull2017 page  677 or @Shuttleworth2012 page 286. 
 
 ```{r}
 # Shown in 836 tutorial
@@ -62,10 +74,17 @@ loglinfun_returnwind <- function(params, zHeight){ # params must be the same len
 ```{r, include=F}
 # load ####
 
-low_wind <- readRDS('data/eddy_cov_15min_combined.rds') |> select(TIMESTAMP, low_ec_rslt_wnd_spd = result_wind_spd)
+low_wind <- readRDS('data/eddy_cov_15min_combined.rds') |> select(TIMESTAMP, u_star, low_ec_rslt_wnd_spd = result_wind_spd)# |> 
+#   pivot_longer(u_star:low_ec_rslt_wnd_spd)
+# 
+# ggplot(low_wind, aes(TIMESTAMP, value, colour = name)) + geom_line()
+# 
+# plotly::ggplotly()
 
-mid_hi_wind <- readRDS('../../analysis/treefort-main/data/met/met_main.rds') |> select(TIMESTAMP, USWindSpeed_S_WVT, top_ec_rlst_wnd_spd)
+mid_hi_wind <- readRDS('../../analysis/treefort-main/data/met/met_main.rds') |> select(TIMESTAMP, USWindSpeed_S_WVT, top_ec_rlst_wnd_spd, top_ec_u_star)
 
+wind_wide <- left_join(low_wind, mid_hi_wind, by = 'TIMESTAMP')
+ 
 wnd <- left_join(low_wind, mid_hi_wind, by = 'TIMESTAMP') |> 
   pivot_longer(low_ec_rslt_wnd_spd:top_ec_rlst_wnd_spd)
 
@@ -96,6 +115,33 @@ ggplot(jan16) +
   geom_point()
 ```
 
+## Explore Friction Velocity with wind speed and instrument height / type 
+
+```{r}
+jan16day <- wind_wide |> filter(as.Date(TIMESTAMP) == as.Date('2022-01-16')) |> 
+  select(TIMESTAMP, u_star, top_ec_u_star) |> 
+  pivot_longer(u_star:top_ec_u_star)
+
+ggplot(jan16day, aes(TIMESTAMP, value, colour = name)) +
+  geom_point()
+```
+
+```{r}
+low <- wind_wide |> 
+  select(TIMESTAMP, u_star, wind_speed = low_ec_rslt_wnd_spd) |> 
+  mutate(group = '3 m')
+
+hi <- wind_wide |> 
+  select(TIMESTAMP, u_star = top_ec_u_star, wind_speed = top_ec_rlst_wnd_spd) |> 
+  mutate(group = '13.5 m')
+
+all <- rbind(low, hi) |> filter(as.Date(TIMESTAMP) == as.Date('2022-01-16')) 
+
+ggplot(all, aes(wind_speed, u_star, colour = group)) +
+  geom_point()
+```
+
+
 ## Simulated Wind Curve
 
 ```{r}
@@ -112,6 +158,7 @@ est_pars <- data.frame(
   d_0 = fitted_wind$par_est$par[3]
 )
 est_pars
+est_pars_long <- est_pars |> pivot_longer(everything())
 
 mod_df <- data.frame(height_m = seq(est_pars$d_0+est_pars$z_0m, 25, 0.1))
 
@@ -128,7 +175,16 @@ all <- rbind(mod_df, jan16fltr)
 
 ggplot(data = all, aes(value, height_m, colour = group)) +
   geom_line(data = subset(all, group == 'simulated')) +
-  geom_point(data = subset(all, group == 'obs')) 
+  geom_point(data = subset(all, group == 'obs')) +
+  annotation_custom(gridExtra::tableGrob(est_pars_long), xmin = 0, ymin = 15)
 
 ggsave('figs/FFR_wind_profile.png', height = 5, width = 5)
 ```  
+
+## Results
+
+- The fitted wind curve for Jan 16 4 pm results in an **estimated** $u_*$ value of: `r round(est_pars$ustar, 3)` 
+- The **measured** $u_*$ on this day at 3m height is: `r round(unique(jan16$u_star), 3)`
+- The **measured** $u_*$ on this day at 14m height is: `r round(unique(jan16$top_ec_u_star), 3)`
+
+The $u_*$ measured at 3 m is very close to modelled. Something seems wrong with the $u_*$ calculated on Jan 16 at 13.5 m tower top. 
