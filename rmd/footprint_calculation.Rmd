@@ -9,47 +9,203 @@ csl: ../../papers/bibtex/apa.csl
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(weatherdash)
 ```
+
+TODO:
+
+- lower EC was raised winter 2022 need to fix in QAQC before applying across all dates
+- instrument height changes relative to snow calculate using SR50 data? 
+- what is the difference in  "horiz_wind_spd" & "result_wind_spd"
 
 ## Formulas
 
-Calculate the footprint $X_f$ representative of these measurements that accounts for 80% of the flux. Where $U$ is the assumed constant wind speed, $u^{*}$ is the friction velocity, $d$ is the displacement height due to vegetation (taken as 2/3 the vegetation height), $z$ is the instrument height, $k$ is the von karmans constant (usually taken as 0.4) [@Schuepp1990]:
+Calculate the upwind area aka footprint ($X_f$, m) representative of these measurements that accounts for a percentage of the flux. Where $U$ is the assumed constant wind speed, $u^{*}$ is the friction velocity, $d$ is the displacement height due to vegetation (taken as 2/3 the vegetation height), $z$ is the instrument height, $k$ is the von karmans constant (usually taken as 0.4), $f$ is the fraction of the area that explains the flux [@Schuepp1990]:
 
 $$
-X_f = - \frac{1}{ln f}\frac{U}{u^*}\frac{z-d}{k}
+X_f = - \frac{1}{ln(f)}\frac{U}{u^*}\frac{z-d}{k}
 $$ 
-Calculate Friction Velocity $u_*$, can be done using either two instrument heights, or a single and estimated roughness length of momentum @Stull2017:
+Friction velocity ($u_*$) can be modelled as in wind_profile.Rmd or is also measured at the Eddy Covariance Sites. 
 
-$$
-u_* = (\overline{u_2} - \overline{u_1})\  k\  ln(\frac{z_2 - d_0}{z_1 - d_0})^{-1} = \overline{u_1}\  k\ ln(\frac{z - d_0}{z_{0m}})^{-1}
-$$
-where $\overline{u}$ is the instrument wind speed at height $z$, $z_0$ is the aerodynamic roughness height (m, 0.1 of vegetation height), $z_{0m}$ is the roughness length of momentum (estimated from literature, e.g. [@Stull2017]):
-
-$$
-U = \frac{u^*[ln((z-d)/z_0)-1+z_0/(z-d)]}{k(1-z_0/(z-d))}
-$$ 
 ## find the parameters $u^{∗}$, $Z_{0m}$, and $d_0$ of the logarithmic wind profile equation that best matches the measured data provided below:
-
 
 Constants:
 
 ```{r}
+# need to measure this in the field still (2022-06-01)
+temp_offset <- 125
+
 k <- 0.4 # von karmans constant (unitless) 
-z_0m <- 2 # centers of large towns and cities, irregular forests with scattered clearings @Stull2017
-d0 <- 0.7 # m 
-z1 <- 1 # m
-z2 <- 2 # m 
-u1 <- 0.3 # m s-1
-u2 <- 0.5 # m s-1
+
+d0 <- 1.965869 # m estimated from jan 16 2022 at
+f <- 0.8 # 80%
+
 ```
 
-Calculate U:
+Load Data: 
 
 ```{r}
-f <- 0.8 # 80%
-U_1 <- (u_star * (log((z1-d0)/z_0m) - 1 + z_0m/(z1-d0)))/(k*(1-z_0m/(z1-d0)))
-U_2 <- (u_star * (log((z2-d0)/z_0m) - 1 + z_0m/(z2-d0)))/(k*(1-z_0m/(z2-d0)))
+low_wind <- readRDS('data/eddy_cov_15min_combined.rds') |> select(TIMESTAMP, wnd_dir_compass, u_star, low_ec_rslt_wnd_spd = result_wind_spd)# |> 
+#   pivot_longer(u_star:low_ec_rslt_wnd_spd)
+# 
+# ggplot(low_wind, aes(TIMESTAMP, value, colour = name)) + geom_line()
+# 
+# plotly::ggplotly()
 
-xf_1 <- -(1/log(f))*(U_1/u_star)*((z1-d0)/k)
-xf_2 <- -(1/log(f))*(U_2/u_star)*((z2-d0)/k)
+mid_hi_wind <- readRDS('../../analysis/treefort-main/data/met/met_main.rds') |> select(TIMESTAMP, USWindSpeed_S_WVT, top_ec_rlst_wnd_spd, top_ec_u_star)
+
+wind_wide <- left_join(low_wind, mid_hi_wind, by = 'TIMESTAMP')
+
+wind_dir <- wind_wide |> 
+  mutate(wind_dir = (wnd_dir_compass + temp_offset) %% 365) |> 
+  select(TIMESTAMP, wind_dir) 
+
+low <- wind_wide |> 
+  select(TIMESTAMP, u_star, wind_speed = low_ec_rslt_wnd_spd) |> 
+  mutate(inst_height = 3) |> 
+  mutate(
+    med = zoo::rollapply(wind_speed, width = 1000, FUN = median, na.rm = T, align = 'center', partial = T),
+    sd = zoo::rollapply(wind_speed, width = 1000, FUN = sd, na.rm = T, align = 'center', partial = T),
+    stdep = (wind_speed - med) / sd,
+    flag = ifelse(wind_speed > 4, T, F)
+  ) |> 
+    select(TIMESTAMP, u_star, wind_speed, inst_height, flag) 
+
+
+ggplot(low, aes(TIMESTAMP, wind_speed, colour = flag)) + geom_point()
+
+plotly::ggplotly()
+
+hi <- wind_wide |> 
+  select(TIMESTAMP, u_star = top_ec_u_star, wind_speed = top_ec_rlst_wnd_spd) |> 
+  mutate(
+    inst_height = 13.5,
+    mean = zoo::rollapply(wind_speed, width = 48, FUN = mean, na.rm = T, align = 'center', partial = T),
+    sd = zoo::rollapply(wind_speed, width = 48, FUN = sd, na.rm = T, align = 'center', partial = T),
+    stdep = (wind_speed - mean) / sd,
+    flag = ifelse(wind_speed > 20, T, F)
+  ) |> 
+  select(TIMESTAMP, u_star, wind_speed, inst_height, flag) 
+
+ggplot(hi, aes(TIMESTAMP, wind_speed, colour = flag)) + geom_point()
+plotly::ggplotly()
+
+
+all <- rbind(low, hi) |> 
+  left_join(wind_dir) |> 
+  filter(flag == F)
+
+all <- weatherdash::cat_wind(all, 'wind_dir', 'wind_dir_bin')
+
+ggplot(all, aes(TIMESTAMP, wind_speed, colour = flag)) + 
+  geom_point() +
+  facet_wrap(~inst_height)
+plotly::ggplotly()
+  
+#|> filter(as.Date(TIMESTAMP) == as.Date('2022-01-16')) 
+
 ```
+
+Calculate $X_f$:
+
+```{r}
+x_f <- all |> 
+  mutate(x_f = -(1/log(f))*(wind_speed/u_star)*((inst_height-d0)/k)) |> 
+  filter(x_f < 5000)
+
+```
+
+Plot $X_f$ for 3m EC with wind speed on all days: 
+NOTE EC WAS RAISED Feb 17, 2022, this could be why relationship changes after FEB plot.
+
+```{r}
+ggplot(x_f |> filter(inst_height == 3), aes(wind_speed, x_f, colour = wind_dir_bin)) +
+  geom_point() +
+  facet_wrap(~inst_height+strftime(as.Date(TIMESTAMP), "%m"))
+```
+
+Plot $X_f$ for 13.5 m EC with wind speed on all days: 
+
+Maybe larger footprint during winter months when snow is in the trees? 
+
+```{r}
+ggplot(x_f |> filter(inst_height == 13.5), aes(wind_speed, x_f, colour = wind_dir_bin)) +
+  geom_point() +
+  facet_wrap(~inst_height+strftime(as.Date(TIMESTAMP), "%m"), scales = 'free')
+
+plotly::ggplotly()
+
+```
+
+Output $X_f$ table
+
+```{r}
+x_f |> 
+  mutate(yr_mon =  strftime(as.Date(TIMESTAMP), "%y-%m")) |> 
+  group_by(inst_height, yr_mon) |> 
+  summarise(x_f_mean = mean(x_f, na.rm = T),
+            wind_spd_mean = mean(wind_speed, na.rm = T),
+            wind_spd_pk_mean = max(wind_speed, na.rm = T),
+            wind_dir_mean = mean(wind_dir, na.rm = T))
+```
+
+
+Wind Rose for all months for each instrument height:
+
+```{r}
+# for (i in c(3,13.5)) {
+#   for (m in 1:12) {
+#     fltr <- all |> 
+#       mutate(month = as.numeric(strftime(as.Date(TIMESTAMP), "%m"))) |> 
+#       filter(inst_height == i,
+#              month == m)
+#     
+#   if(nrow(fltr) != 0){
+#     p <- weatherdash::wind_rose(fltr, 'TIMESTAMP', 'wind_speed', 'wind_dir', plot_title = paste('Height', i, "m", 'for', m))
+#     file1 <- paste0('figs/wind_rose/wind_rose_height_', i, '_', m,'.html')
+#     file2 <- paste0('figs/wind_rose/wind_rose_height_', i, '_', m,'.png')
+# 
+#     htmlwidgets::saveWidget(plotly::as_widget(p), file1)
+#     plotly::save_image(p, file2)
+#   }
+# 
+#   }
+#   
+# }
+```
+
+Look at one of the windiest days without snow on instruments:
+
+```{r}
+ggplot(x_f |> filter(as.Date(TIMESTAMP) == as.Date('2022-01-16')) , aes(wind_speed, x_f)) +
+  geom_point() +
+  facet_wrap(~inst_height, scales = 'free')
+```
+
+Wind Rose on this Day:
+
+```{r}
+
+
+low_wind <- readRDS('data/eddy_cov_15min_combined.rds') |> 
+  filter(as.Date(TIMESTAMP) == as.Date('2022-01-16')) |> 
+  select(TIMESTAMP, 
+         wnd_dir_compass, 
+         u_star, 
+         low_ec_rslt_wnd_spd = result_wind_spd) |>
+  mutate(
+    wind_dir = (wnd_dir_compass + temp_offset) %% 365,
+    mean = zoo::rollapply(low_ec_rslt_wnd_spd, width = 48, FUN = mean, na.rm = T, align = 'center', partial = T),
+    sd = zoo::rollapply(low_ec_rslt_wnd_spd, width = 48, FUN = sd, na.rm = T, align = 'center', partial = T),
+    stdep = (low_ec_rslt_wnd_spd - mean) / sd,
+    flag = ifelse(low_ec_rslt_wnd_spd > 4, T, F)
+  ) 
+
+ggplot(low_wind, aes(TIMESTAMP, low_ec_rslt_wnd_spd, colour = flag)) + 
+  geom_point() 
+
+weatherdash::wind_rose(low_wind, 'TIMESTAMP', 'low_ec_rslt_wnd_spd', 'wind_dir', plot_title = 'test')
+```
+
