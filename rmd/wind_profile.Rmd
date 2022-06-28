@@ -13,12 +13,13 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r pkgs}
 library(tidyverse)
+library(trbtransfeR)
 ```
 
 Return wind profile as in 836 assignment 4. feb14 - mar 4 US wind suspect.
 
 TODO: 
-- lower EC was raised winter 2022 need to fix in QAQC before applying across all dates
+- lower EC was raised feb 2022 need to fix in QAQC before applying across all dates
 - what is the difference in  "horiz_wind_spd" & "result_wind_spd"
 
 ## Functions 
@@ -30,46 +31,6 @@ $$
 $$
 
 where $\overline{u}$ is average wind speed, $u_*$ is the friction velocity, $z$ is the instrument height, $d_0$ is the displacement height, $z_0$ is the roughness length of momentum for an average canopy-top height, and $k$ is the von Karmen Constant. See @Stull2017 page  677 or @Shuttleworth2012 page 286. 
-
-```{r}
-# Shown in 836 tutorial
-
-fit_neutral_wind_CE836 <- function(uMeas, zHeight){
-  
-  loglinfun <- function(params){ # the input variable params must be the same length and dimension as the initial guesses (i.e. start points)
-    ustar <- params[[1]]
-    z_0m <- params[[2]]
-    d_0 <- params[[3]]
-    
-    FittedWspeed <- ustar/0.4*log((zHeight - d_0)/(z_0m)) # log-linear wind speed function
-    
-    obj_fn <- FittedWspeed - uMeas
-    SSE <- sum(obj_fn^2) # this is the sum square error, which is the value that we are trying to minimize. 
-    
-    #out <- list('SSE' = SSE, 'FittedWspeed' = FittedWspeed) # create list for multi arg return 
-    return(SSE) 
-  }
-  
-  # set initial guesses for friction velocity and roughness length
-  start_point <- c(0.5, 0.5, 0.5)
-  
-  parameter_estimates <- optim(par = start_point, fn = loglinfun)
-  
-  out <- list('par_est' = parameter_estimates, 'model' = loglinfun)
-  return(out)
-}
-
-# helper function to create df using params created from above
-loglinfun_returnwind <- function(params, zHeight){ # params must be the same length and dimension as the initial guesses (i.e. start points)
-  ustar <- params[[1]]
-  z_0m <- params[[2]]
-  d_0 <- params[[3]]
-  
-  FittedWspeed <- ustar/0.4*log((zHeight - d_0)/(z_0m)) # log-linear wind speed function
-  
-  return(FittedWspeed)
-}
-```
 
 ```{r, include=F}
 # load ####
@@ -147,22 +108,20 @@ ggplot(all, aes(wind_speed, u_star, colour = group)) +
 ```{r}
 # simulated wind curve ####
 
-fitted_wind <- fit_neutral_wind_CE836(jan16$value, jan16$height)
+# estimate wind profile from 2 - 13.5 m, do not supply u_star as it needs to be estimated as average/integration over the profile
+est_pars <- trbtransfeR::optim_wind_params(uMeas = jan16$value, 
+                                       zHeight = jan16$height, 
+                                       u_star = NA,
+                                       z_0m = NA,
+                                       d_0 = NA
+                                       )
 
-# Put estimated parameters in data frame
-est_pars <- data.frame(
-  ustar = fitted_wind$par_est$par[1],
-  
-  z_0m = fitted_wind$par_est$par[2],
-  
-  d_0 = fitted_wind$par_est$par[3]
-)
 est_pars
 est_pars_long <- est_pars |> pivot_longer(everything())
 
 mod_df <- data.frame(height_m = seq(est_pars$d_0+est_pars$z_0m, 25, 0.1))
 
-mod_df$value <- loglinfun_returnwind(c(est_pars$ustar, est_pars$z_0m, est_pars$d_0), mod_df$height_m)
+mod_df$value <- trbtransfeR::fit_neutral_wind_helpr(c(est_pars$ustar, est_pars$z_0m, est_pars$d_0), mod_df$height_m)
 mod_df$group <- 'simulated'
 
 jan16fltr <- jan16 |> select(height_m = height, value) |> mutate(group = 'obs') |> as.data.frame()
