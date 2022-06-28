@@ -21,6 +21,7 @@ Return wind profile as in 836 assignment 4. feb14 - mar 4 US wind suspect.
 TODO: 
 - lower EC was raised feb 2022 need to fix in QAQC before applying across all dates
 - what is the difference in  "horiz_wind_spd" & "result_wind_spd"
+- how does this change over time? 
 
 ## Functions 
 
@@ -141,9 +142,10 @@ ggsave('figs/FFR_wind_profile.png', height = 5, width = 5)
 ```  
 
 ## Results
+The modelled wind speed parameters are representative of the overall wind speed profile and not reflective of a single measurement height. 
 
 - The fitted wind curve for Jan 16 4 pm results in an **estimated** $u_*$ value of: `r round(est_pars$ustar, 3)` 
 - The **measured** $u_*$ on this day at 3m height is: `r round(unique(jan16$u_star), 3)`
 - The **measured** $u_*$ on this day at 14m height is: `r round(unique(jan16$top_ec_u_star), 3)`
 
-The $u_*$ measured at 3 m is very close to modelled. Something seems wrong with the $u_*$ calculated on Jan 16 at 13.5 m tower top. 
+The $u_*$ measured at 3 m is very close to modelled. This is likely becuase the 3 m wind speed is a better representation of the averge while the top tower u_star value is skewed.

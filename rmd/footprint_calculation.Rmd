@@ -39,7 +39,7 @@ temp_offset <- 125
 
 k <- 0.4 # von karmans constant (unitless) 
 
-d0 <- 1.965869 # m estimated from jan 16 2022 at
+d0 <- 1.965869 # m estimated from jan 16 2022 at 4:00 pm 
 f <- 0.8 # 80%
 
 ```
@@ -146,6 +146,7 @@ x_f |>
   mutate(yr_mon =  strftime(as.Date(TIMESTAMP), "%y-%m")) |> 
   group_by(inst_height, yr_mon) |> 
   summarise(x_f_mean = mean(x_f, na.rm = T),
+            u_star_mean = mean(u_star, na.rm = T),
             wind_spd_mean = mean(wind_speed, na.rm = T),
             wind_spd_pk_mean = max(wind_speed, na.rm = T),
             wind_dir_mean = mean(wind_dir, na.rm = T))
