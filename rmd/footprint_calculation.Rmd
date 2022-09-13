@@ -3,8 +3,6 @@ title: "Footprint Calculation"
 author: "Cebulski, A.C"
 date: "`r Sys.Date()`"
 output: html_document
-bibliography: [../../papers/bibtex/library.bib]
-csl: ../../papers/bibtex/apa.csl
 ---
 
 ```{r setup, include=FALSE}

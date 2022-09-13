@@ -8,7 +8,7 @@ library(wxlogR)
 files <- list.files('../../field-downloads/met-data/hi-freq/clean', pattern = '*flux15.dat', full.names = T)
 
 # loop through files and bind together
-bind <- map_dfr(files, wxlogR::load_CS_1000, skip_4_dat = 4, timezone = 'CST') |> distinct()
+bind <- map_dfr(files, wxlogR::load_CS_1000, skip_4_dat = 4, timezone = 'GMT-6') |> distinct()
 
 # check data gaps against complete time series range
 date_range <- range(bind$TIMESTAMP)
