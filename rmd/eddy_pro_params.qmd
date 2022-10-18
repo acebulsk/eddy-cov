@@ -1,0 +1,89 @@
+---
+title: "Eddy Pro Parameters 3m Tower"
+author: "Alex Cebulski"
+format: html
+---
+
+## Overview
+
+Find the parameters we need for the eddy pro metadata file and output these as a html doc.
+
+:::{.callout-important}
+## Caution
+Tower raised at 5 pm Feb 17 (MST) aka 6 pm CDT / MDT
+:::
+
+## Logger Frequency
+
+```{r}
+# library(tidyverse)
+# ecHF1_low <- readRDS('../data/TOA5_FRG_low_20220214.highfreq.rds')
+# 
+# ecHF_head <- head(ecHF1_low, n = 25)
+# saveRDS(ecHF_head, '../data/example_TOA5_FRG_low_20220214.highfreq.rds')
+ec_hf_head <- readRDS('../data/example_TOA5_FRG_low_20220214.highfreq.rds')
+
+ec_hf_head
+```
+
+Manually checked and is ~20hz.
+
+Cols are:
+
+- V
+- W
+- U
+- Ts - the average between the three non-orthogonal sonic axe
+
+## Find Canopy Height
+
+Load Data:
+
+```{r}
+tree_heights <- readRDS('../../lidar/data/22_243_FT_ttops_5m_norm.rds')
+mean_height <- mean(tree_heights$Z)
+```
+
+The average tree height of the small bounding box around the tall tower is: `r mean_height` m.
+
+## Displacement Height and Roughness Length
+
+```{r}
+readRDS('../data/average_z_0m_d0_2m_3m.rds')
+```
+
+## Find Station Coords
+
+```{r}
+coords <- read.csv('../../../research/data/gis/site_coords.csv')  
+
+coords$lon_dms <- sp::dd2dms(coords$lon) |> as.character()
+coords$lat_dms <- sp::dd2dms(coords$lat, NS = T) |> as.character()
+
+```
+
+The rough coordinates of Fortress Mountain are: 
+
+`r coords[3,]`
+
+## Angle From North
+
+North offset from https://www.licor.com/env/support/EddyPro/topics/north-offset.html
+
+    For post-mounted anemometers (e.g., Gill WindMaster® and Metek USA-1), a tag is normally provided to align the anemometer correctly with respect to due north. The anemometer, however, can be placed in any position. If it is positioned with the north arrow aligned off of north, the yaw offset must be measured and provided here. The offset angle should be provided in degrees past north as a positive value representing the angle from geographic north (from an overhead view, degrees past north are in the clockwise direction). Yoke-mounted anemometers (Gill HS and Campbell® Scientific CSAT3) are normally oriented facing the prevailing wind direction and independently of due north. In these cases, provide the angle between the main axis of the anemometer (pointing away from the support arm) and due north, with the same sign convention as with vertical mounted anemometers.
+
+Measured Eddie covariance lower tower direction using Suunto compass with 18° declination. on june 29 2022.
+Compass reads 120° using the box pointing through the claws
+
+
+```{r}
+ec_direction_raw <- 120 # using suunto compass with 18 deg declination
+suunto_declination <- 18 # from compass
+calg_declination <- 14 # from google
+
+ec_dir_final <- (ec_direction_raw - suunto_declination) + calg_declination 
+```
+
+The North Offset is:
+
+`r ec_dir_final`°
