@@ -13,6 +13,8 @@ Find the parameters we need for the eddy pro metadata file and output these as a
 Tower raised at 5 pm Feb 17 (MST) aka 6 pm CDT / MDT
 :::
 
+# PROJECT CREATION 
+
 ## Logger Frequency
 
 ```{r}
@@ -33,7 +35,8 @@ Cols are:
 - V
 - W
 - U
-- Ts - the average between the three non-orthogonal sonic axe
+- Ts (ignored, the average between the three non-orthogonal sonic axes)
+- vh (g/m3, h2o mass density)
 
 ## Find Canopy Height
 
@@ -87,3 +90,48 @@ ec_dir_final <- (ec_direction_raw - suunto_declination) + calg_declination
 The North Offset is:
 
 `r ec_dir_final`°
+
+## Instrument Separation
+
+Need to get lindsay's original install notes. 
+
+Feb. 17 2022 measurement
+estimated using iphone image. need to double check with in-situ measurement.
+
+- northward separation: 8 cm
+- eastward separation: 4 cm
+
+## Time Lag
+
+Const SCAN_INTERVAL = 50 ' (100mSec) is this response time ?? (1/0.05 == 20 hz)
+Const CSAT_OPT = 20 '(10) - this tells the CSAT what freq. to expect a trigger
+Const ANALOG_DELAY = 6 '6 scan delay (4(3 scan delay)) - delay for non-csat flux instruments eg. KH20, FWTC etc.
+Const CSAT_DELAY = 4 '(4 scan delay (2(1 scan delay)) - delay for CSAT to match the analog delay... pipeline delay of 2 scans is done automatically by SDM
+
+## Hydrometer Specs
+
+Model: KH20
+Serial: SN1527 *need to confirm*
+Const XKW_high = -0.181 'sensor specific S/N 1527, scaled, dry vapour range
+Const Cp_high = 1005 'approximate heat capacity of air
+Const LV_high = 2835 'approx. latent heat of sublimation at 0C
+Const RHO_high = 1.204 ' estimate air density
+Const x = 1  ' Path length of KH20 (cm)
+Const xkw = (-1) * x * XKW_high  'Path Length * Water Vapor absorbtion coefficient (M^3 / g)
+Public rho_w
+Units rho_w = g/m^3
+
+Unknown but requried
+
+Software version of csat and kh20
+serial num for csat3
+Response time of kh20 ??
+
+:::{.callout-note}
+## Note
+These metadata are from the SnowExp_CSAT_high_R1.CR3 program
+:::
+
+## BASIC SETTINGS
+
+TOB1_FRG_low_20220214.highfreq_yyyy_mm_dd_HHMM.dat
