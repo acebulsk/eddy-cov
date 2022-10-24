@@ -35,8 +35,9 @@ Cols are:
 - V
 - W
 - U
-- Ts (ignored, the average between the three non-orthogonal sonic axes)
-- vh (g/m3, h2o mass density)
+- Ts (sonic temperature)
+- vh (mV, ??)
+- diag_word (diagnostic word)
 
 ## Find Canopy Height
 
@@ -93,13 +94,18 @@ The North Offset is:
 
 ## Instrument Separation
 
-Need to get lindsay's original install notes. 
-
 Feb. 17 2022 measurement
 estimated using iphone image. need to double check with in-situ measurement.
 
 - northward separation: 8 cm
 - eastward separation: 4 cm
+
+Path Length (KH20)
+
+see 'docs/ATTEMA-THESIS-2020.pdf'
+
+- longitudinal: 1.25
+- tranversal: 1
 
 ## Time Lag
 
