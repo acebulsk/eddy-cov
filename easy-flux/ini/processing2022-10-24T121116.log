@@ -1,0 +1,1171 @@
+
+
+*******************
+*******************
+Executing EddyPro 
+Executing EddyPro 
+*******************
+*******************
+
+
+EddyPro-RP, version 6.2.0, build 2016-08-17, 10:43.
+Reading EddyPro project file: Z:\home\alex\local-usask\analysis\eddy-cov\easy-flux\ini\processing.eddypro..
+Done.
+Retrieving file names from directory:
+"Z:\home\alex\local-usask\analysis\eddy-cov\easy-flux\"
+1 files found.
+Retrieving timestamps from file names.. Done.
+Done.
+Reading alternative metadata file: "Z:\home\alex\local-usask\analysis\eddy-cov\easy-flux\ini\datafile.metadata".. Done.
+Arranging files in chronological order.. Done.
+Creating master time series.. Done.
+Start raw data processing: 0:00:00.000  
+Processing time period:
+Start: 2022-02-01 00:00
+End: 2022-02-02 00:00
+Total number of flux averaging periods: 96
+
+
+2022-10-24 12:11:16.711: processing new flux averaging period
+From: 2022-02-01 00:00
+To: 2022-02-01 00:15
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.063  
+
+2022-10-24 12:11:16.773: processing new flux averaging period
+From: 2022-02-01 00:15
+To: 2022-02-01 00:30
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.051  
+
+2022-10-24 12:11:16.824: processing new flux averaging period
+From: 2022-02-01 00:30
+To: 2022-02-01 00:45
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.061  
+
+2022-10-24 12:11:16.886: processing new flux averaging period
+From: 2022-02-01 00:45
+To: 2022-02-01 01:00
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.076  
+
+2022-10-24 12:11:16.961: processing new flux averaging period
+From: 2022-02-01 01:00
+To: 2022-02-01 01:15
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.084  
+
+2022-10-24 12:11:17.046: processing new flux averaging period
+From: 2022-02-01 01:15
+To: 2022-02-01 01:30
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.097  
+
+2022-10-24 12:11:17.142: processing new flux averaging period
+From: 2022-02-01 01:30
+To: 2022-02-01 01:45
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.119  
+
+2022-10-24 12:11:17.261: processing new flux averaging period
+From: 2022-02-01 01:45
+To: 2022-02-01 02:00
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.127  
+
+2022-10-24 12:11:17.388: processing new flux averaging period
+From: 2022-02-01 02:00
+To: 2022-02-01 02:15
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.138  
+
+2022-10-24 12:11:17.527: processing new flux averaging period
+From: 2022-02-01 02:15
+To: 2022-02-01 02:30
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.152  
+
+2022-10-24 12:11:17.678: processing new flux averaging period
+From: 2022-02-01 02:30
+To: 2022-02-01 02:45
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.158  
+
+2022-10-24 12:11:17.836: processing new flux averaging period
+From: 2022-02-01 02:45
+To: 2022-02-01 03:00
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.180  
+
+2022-10-24 12:11:18.016: processing new flux averaging period
+From: 2022-02-01 03:00
+To: 2022-02-01 03:15
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.200  
+
+2022-10-24 12:11:18.217: processing new flux averaging period
+From: 2022-02-01 03:15
+To: 2022-02-01 03:30
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.217  
+
+2022-10-24 12:11:18.433: processing new flux averaging period
+From: 2022-02-01 03:30
+To: 2022-02-01 03:45
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.221  
+
+2022-10-24 12:11:18.654: processing new flux averaging period
+From: 2022-02-01 03:45
+To: 2022-02-01 04:00
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.231  
+
+2022-10-24 12:11:18.885: processing new flux averaging period
+From: 2022-02-01 04:00
+To: 2022-02-01 04:15
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.240  
+
+2022-10-24 12:11:19.125: processing new flux averaging period
+From: 2022-02-01 04:15
+To: 2022-02-01 04:30
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.260  
+
+2022-10-24 12:11:19.385: processing new flux averaging period
+From: 2022-02-01 04:30
+To: 2022-02-01 04:45
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.273  
+
+2022-10-24 12:11:19.658: processing new flux averaging period
+From: 2022-02-01 04:45
+To: 2022-02-01 05:00
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.293  
+
+2022-10-24 12:11:19.951: processing new flux averaging period
+From: 2022-02-01 05:00
+To: 2022-02-01 05:15
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.319  
+
+2022-10-24 12:11:20.270: processing new flux averaging period
+From: 2022-02-01 05:15
+To: 2022-02-01 05:30
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.321  
+
+2022-10-24 12:11:20.591: processing new flux averaging period
+From: 2022-02-01 05:30
+To: 2022-02-01 05:45
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.328  
+
+2022-10-24 12:11:20.919: processing new flux averaging period
+From: 2022-02-01 05:45
+To: 2022-02-01 06:00
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.330  
+
+2022-10-24 12:11:21.249: processing new flux averaging period
+From: 2022-02-01 06:00
+To: 2022-02-01 06:15
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.361  
+
+2022-10-24 12:11:21.610: processing new flux averaging period
+From: 2022-02-01 06:15
+To: 2022-02-01 06:30
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.369  
+
+2022-10-24 12:11:21.979: processing new flux averaging period
+From: 2022-02-01 06:30
+To: 2022-02-01 06:45
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.384  
+
+2022-10-24 12:11:22.364: processing new flux averaging period
+From: 2022-02-01 06:45
+To: 2022-02-01 07:00
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.396  
+
+2022-10-24 12:11:22.759: processing new flux averaging period
+From: 2022-02-01 07:00
+To: 2022-02-01 07:15
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.415  
+
+2022-10-24 12:11:23.174: processing new flux averaging period
+From: 2022-02-01 07:15
+To: 2022-02-01 07:30
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.425  
+
+2022-10-24 12:11:23.599: processing new flux averaging period
+From: 2022-02-01 07:30
+To: 2022-02-01 07:45
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.416  
+
+2022-10-24 12:11:24.016: processing new flux averaging period
+From: 2022-02-01 07:45
+To: 2022-02-01 08:00
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.461  
+
+2022-10-24 12:11:24.476: processing new flux averaging period
+From: 2022-02-01 08:00
+To: 2022-02-01 08:15
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.461  
+
+2022-10-24 12:11:24.937: processing new flux averaging period
+From: 2022-02-01 08:15
+To: 2022-02-01 08:30
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.482  
+
+2022-10-24 12:11:25.420: processing new flux averaging period
+From: 2022-02-01 08:30
+To: 2022-02-01 08:45
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.474  
+
+2022-10-24 12:11:25.894: processing new flux averaging period
+From: 2022-02-01 08:45
+To: 2022-02-01 09:00
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.521  
+
+2022-10-24 12:11:26.415: processing new flux averaging period
+From: 2022-02-01 09:00
+To: 2022-02-01 09:15
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.509  
+
+2022-10-24 12:11:26.923: processing new flux averaging period
+From: 2022-02-01 09:15
+To: 2022-02-01 09:30
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.544  
+
+2022-10-24 12:11:27.467: processing new flux averaging period
+From: 2022-02-01 09:30
+To: 2022-02-01 09:45
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.550  
+
+2022-10-24 12:11:28.017: processing new flux averaging period
+From: 2022-02-01 09:45
+To: 2022-02-01 10:00
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.579  
+
+2022-10-24 12:11:28.596: processing new flux averaging period
+From: 2022-02-01 10:00
+To: 2022-02-01 10:15
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.580  
+
+2022-10-24 12:11:29.176: processing new flux averaging period
+From: 2022-02-01 10:15
+To: 2022-02-01 10:30
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.605  
+
+2022-10-24 12:11:29.781: processing new flux averaging period
+From: 2022-02-01 10:30
+To: 2022-02-01 10:45
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.599  
+
+2022-10-24 12:11:30.381: processing new flux averaging period
+From: 2022-02-01 10:45
+To: 2022-02-01 11:00
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.617  
+
+2022-10-24 12:11:30.997: processing new flux averaging period
+From: 2022-02-01 11:00
+To: 2022-02-01 11:15
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.641  
+
+2022-10-24 12:11:31.638: processing new flux averaging period
+From: 2022-02-01 11:15
+To: 2022-02-01 11:30
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.628  
+
+2022-10-24 12:11:32.267: processing new flux averaging period
+From: 2022-02-01 11:30
+To: 2022-02-01 11:45
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.639  
+
+2022-10-24 12:11:32.905: processing new flux averaging period
+From: 2022-02-01 11:45
+To: 2022-02-01 12:00
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.652  
+
+2022-10-24 12:11:33.557: processing new flux averaging period
+From: 2022-02-01 12:00
+To: 2022-02-01 12:15
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.653  
+
+2022-10-24 12:11:34.210: processing new flux averaging period
+From: 2022-02-01 12:15
+To: 2022-02-01 12:30
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.681  
+
+2022-10-24 12:11:34.891: processing new flux averaging period
+From: 2022-02-01 12:30
+To: 2022-02-01 12:45
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.703  
+
+2022-10-24 12:11:35.595: processing new flux averaging period
+From: 2022-02-01 12:45
+To: 2022-02-01 13:00
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.717  
+
+2022-10-24 12:11:36.311: processing new flux averaging period
+From: 2022-02-01 13:00
+To: 2022-02-01 13:15
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.729  
+
+2022-10-24 12:11:37.040: processing new flux averaging period
+From: 2022-02-01 13:15
+To: 2022-02-01 13:30
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.745  
+
+2022-10-24 12:11:37.785: processing new flux averaging period
+From: 2022-02-01 13:30
+To: 2022-02-01 13:45
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.765  
+
+2022-10-24 12:11:38.550: processing new flux averaging period
+From: 2022-02-01 13:45
+To: 2022-02-01 14:00
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.782  
+
+2022-10-24 12:11:39.332: processing new flux averaging period
+From: 2022-02-01 14:00
+To: 2022-02-01 14:15
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.780  
+
+2022-10-24 12:11:40.113: processing new flux averaging period
+From: 2022-02-01 14:15
+To: 2022-02-01 14:30
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.785  
+
+2022-10-24 12:11:40.897: processing new flux averaging period
+From: 2022-02-01 14:30
+To: 2022-02-01 14:45
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.810  
+
+2022-10-24 12:11:41.708: processing new flux averaging period
+From: 2022-02-01 14:45
+To: 2022-02-01 15:00
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.845  
+
+2022-10-24 12:11:42.552: processing new flux averaging period
+From: 2022-02-01 15:00
+To: 2022-02-01 15:15
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.820  
+
+2022-10-24 12:11:43.372: processing new flux averaging period
+From: 2022-02-01 15:15
+To: 2022-02-01 15:30
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.857  
+
+2022-10-24 12:11:44.229: processing new flux averaging period
+From: 2022-02-01 15:30
+To: 2022-02-01 15:45
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.862  
+
+2022-10-24 12:11:45.091: processing new flux averaging period
+From: 2022-02-01 15:45
+To: 2022-02-01 16:00
+File(s): ..\2022-02-01_0000_p1.dat
+Number of samples available for this period: 18000
+Verifying time series integrity.. Done.
+Error(59)> At least one wind component appears to be corrupted (too many implausible values).
+Error(59)> This may also be the result of data exclusion by the "Absolute limits" test or by a
+Error(59)> custom-designed "Flag" in the "Basic Settings" page.
+Error(59)> If the problem occurs for many or all raw files, check those settings.
+Error(59)> Skipping to next averaging period.
+
+Flux averaging period processing time: 0:00:00.880  
+
+2022-10-24 12:11:45.972: processing new flux averaging period
+From: 2022-02-01 16:00
+To: 2022-02-01 16:15
+File(s): ..\2022-02-01_0000_p1.dat
+Flux averaging period processing time: 0:00:00.868  
+
+2022-10-24 12:11:46.840: processing new flux averaging period
+From: 2022-02-01 16:15
+To: 2022-02-01 16:30
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.001  
+
+2022-10-24 12:11:46.840: processing new flux averaging period
+From: 2022-02-01 16:30
+To: 2022-02-01 16:45
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.000  
+
+2022-10-24 12:11:46.840: processing new flux averaging period
+From: 2022-02-01 16:45
+To: 2022-02-01 17:00
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.000  
+
+2022-10-24 12:11:46.841: processing new flux averaging period
+From: 2022-02-01 17:00
+To: 2022-02-01 17:15
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.001  
+
+2022-10-24 12:11:46.841: processing new flux averaging period
+From: 2022-02-01 17:15
+To: 2022-02-01 17:30
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.000  
+
+2022-10-24 12:11:46.841: processing new flux averaging period
+From: 2022-02-01 17:30
+To: 2022-02-01 17:45
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.000  
+
+2022-10-24 12:11:46.841: processing new flux averaging period
+From: 2022-02-01 17:45
+To: 2022-02-01 18:00
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.001  
+
+2022-10-24 12:11:46.842: processing new flux averaging period
+From: 2022-02-01 18:00
+To: 2022-02-01 18:15
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.000  
+
+2022-10-24 12:11:46.842: processing new flux averaging period
+From: 2022-02-01 18:15
+To: 2022-02-01 18:30
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.000  
+
+2022-10-24 12:11:46.842: processing new flux averaging period
+From: 2022-02-01 18:30
+To: 2022-02-01 18:45
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.001  
+
+2022-10-24 12:11:46.843: processing new flux averaging period
+From: 2022-02-01 18:45
+To: 2022-02-01 19:00
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.000  
+
+2022-10-24 12:11:46.843: processing new flux averaging period
+From: 2022-02-01 19:00
+To: 2022-02-01 19:15
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.000  
+
+2022-10-24 12:11:46.843: processing new flux averaging period
+From: 2022-02-01 19:15
+To: 2022-02-01 19:30
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.001  
+
+2022-10-24 12:11:46.844: processing new flux averaging period
+From: 2022-02-01 19:30
+To: 2022-02-01 19:45
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.000  
+
+2022-10-24 12:11:46.844: processing new flux averaging period
+From: 2022-02-01 19:45
+To: 2022-02-01 20:00
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.000  
+
+2022-10-24 12:11:46.844: processing new flux averaging period
+From: 2022-02-01 20:00
+To: 2022-02-01 20:15
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.001  
+
+2022-10-24 12:11:46.845: processing new flux averaging period
+From: 2022-02-01 20:15
+To: 2022-02-01 20:30
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.020  
+
+2022-10-24 12:11:46.865: processing new flux averaging period
+From: 2022-02-01 20:30
+To: 2022-02-01 20:45
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.000  
+
+2022-10-24 12:11:46.865: processing new flux averaging period
+From: 2022-02-01 20:45
+To: 2022-02-01 21:00
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.001  
+
+2022-10-24 12:11:46.866: processing new flux averaging period
+From: 2022-02-01 21:00
+To: 2022-02-01 21:15
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.000  
+
+2022-10-24 12:11:46.866: processing new flux averaging period
+From: 2022-02-01 21:15
+To: 2022-02-01 21:30
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.023  
+
+2022-10-24 12:11:46.889: processing new flux averaging period
+From: 2022-02-01 21:30
+To: 2022-02-01 21:45
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.000  
+
+2022-10-24 12:11:46.889: processing new flux averaging period
+From: 2022-02-01 21:45
+To: 2022-02-01 22:00
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.000  
+
+2022-10-24 12:11:46.890: processing new flux averaging period
+From: 2022-02-01 22:00
+To: 2022-02-01 22:15
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.022  
+
+2022-10-24 12:11:46.912: processing new flux averaging period
+From: 2022-02-01 22:15
+To: 2022-02-01 22:30
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.001  
+
+2022-10-24 12:11:46.912: processing new flux averaging period
+From: 2022-02-01 22:30
+To: 2022-02-01 22:45
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.000  
+
+2022-10-24 12:11:46.912: processing new flux averaging period
+From: 2022-02-01 22:45
+To: 2022-02-01 23:00
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.021  
+
+2022-10-24 12:11:46.933: processing new flux averaging period
+From: 2022-02-01 23:00
+To: 2022-02-01 23:15
+process exited with a failure code
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.000  
+
+2022-10-24 12:11:46.934: processing new flux averaging period
+From: 2022-02-01 23:15
+To: 2022-02-01 23:30
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.001  
+
+2022-10-24 12:11:46.934: processing new flux averaging period
+From: 2022-02-01 23:30
+To: 2022-02-01 23:45
+Warning(53)> No raw data file relevant to current averaging period was found.
+
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.000  
+
+2022-10-24 12:11:46.934: processing new flux averaging period
+From: 2022-02-01 23:45
+To: 2022-02-02 00:00
+Warning(53)> No raw data file relevant to current averaging period was found.
+Warning(53)> Skipping to next averaging period.
+Flux averaging period processing time: 0:00:00.023  
+
+Fatal error(35)> Oops! Something went wrong. EddyPro was not able to process any raw file.
+Fatal error(35)> Output files not created.
+Fatal error(35)> Program execution aborted.
+Starting flux computation and correction session..
+
+Reading EddyPro project file: Z:\home\alex\local-usask\analysis\eddy-cov\easy-flux\ini\processing.eddypro..
+Error(87)> Entered or inferred "Binned co-spectra files directory" does not exist.
+Error(87)> EddyPro cannot perform spectral assessment, calculate ensemble averaged spectra
+Error(87)> or calculate ensemble averaged co-spectra.
+Error(87)> Continuing by switching to Moncrieff et al. (1997) spectral corrections
+Error(87)> if an in-situ method was selected, and ignoring selection of ensemble
+Error(87)> averaged spectra or co-spectra outputs
+Done.
+Initializing retrieval of EddyPro-RP results from file: 
+"none"..
+Fatal error(60)> Occurred while opening or reading "essentials" file.
+Fatal error(60)> Execution will be aborted, but you may be able to avoid re-processing raw data
+Fatal error(60)> by fixing the problem with the "essentials" file and using the option
+Fatal error(60)> "Previous data directory" in the "Basic Settings" page.
+Fatal error(60)> Please consult software documentation.
+Fatal error(60)> Program execution aborted.
+process exited with a failure code
