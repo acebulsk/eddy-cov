@@ -1,7 +1,7 @@
 ;EDDYPRO_PROCESSING
 [Project]
 creation_date=2022-10-18T14:33:38
-last_change_date=2022-10-24T14:58:48
+last_change_date=2022-10-26T17:00:38
 file_name=Z:/home/alex/local-usask/analysis/eddy-cov/eddy-pro/ffr-3m-ac-derrived-params.eddypro
 run_mode=1
 run_fcc=0
@@ -101,7 +101,7 @@ sa_min_st_le=3.0000
 sa_min_st_h=5.0000
 add_sonic_lptf=1
 horst_lens=2
-ex_file=Z:/home/alex/local-usask/analysis/eddy-cov/data/hi-freq/output/calcrho/eddypro_1_fluxnet_2022-10-24T145848_exp.csv
+ex_file=Z:/home/alex/local-usask/analysis/eddy-cov/data/hi-freq/output/calcrho/eddypro_1_fluxnet_2022-10-26T170038_exp.csv
 sa_bin_spectra=
 sa_full_spectra=
 ex_dir=
