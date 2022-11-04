@@ -1,6 +1,11 @@
 # combine all 15 min EC downloads, this script uses the output from the campbell sci card 
 # convert program which extracts the compressed TOA3 files to TOA5 which we load in here
 # hi freq data was moved to hard drive (compressed data on hard drive and one drive)
+# this script keeps the original data structure, its not clear in the original campbell sci program where the Ux_Ux to ln_vh_Ts 
+# comes from. After some sleuthing we can see the CrBasin Covariance function takes the covariance of all combinations of 
+# data from the cov in table which has Ux, Uy, Uz, ln_vh, Ts. 
+
+
 library(dplyr)
 library(wxlogR)
 
