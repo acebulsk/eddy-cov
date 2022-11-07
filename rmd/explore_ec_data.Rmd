@@ -1,0 +1,226 @@
+---
+title: "Eddy Covariance Checks"
+author: "Alex Cebulski"
+date: "28/02/2022"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE, echo=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.height=2, fig.width=8)
+setwd("~/local-usask/analysis/eddy-cov/rmd")
+
+
+library(data.table)
+library(plotly)
+library(tidyverse)
+library(wxlogR)
+
+# 3m EC data
+
+# processed
+
+ec_raw_compute <- read.csv('../data/eddy_pro_output/eddypro_1_full_output_2022-11-04T201154_exp.csv', skip = 1)
+
+raw_units <- as.character(ec_raw_compute[1,])
+
+ec_3m_post <- ec_raw_compute[2:nrow(ec_raw_compute),] 
+
+ec_3m_post <- ec_3m_post |> 
+  mutate(
+    TIMESTAMP = as.POSIXct(paste(date, time), tz = 'GMT-6'),
+    across(DOY:w.h2o_cov, as.numeric)) |> 
+  select(TIMESTAMP, DOY:w.h2o_cov)
+
+ec_3m_logr <- readRDS('../data/eddy_cov_15min_combined.rds') |> 
+  mutate(LE = -LE)
+
+# raw
+
+# ecHF1 <- wxlogR::load_CS_HF(path = '../../../field-downloads/fortress/hanging tree/hi freq/clean/TOA5_FRG_low_20220214.highfreq.dat')
+
+# ecHF1_low <- readRDS('../data/TOA5_FRG_low_20220214.highfreq.rds')
+
+# 15 m EC data
+
+ec_15m_logr <- readRDS('../../interception/data/met/waterloo_1000_ec_main.rds')
+
+# met data from all loggers 
+met <- readRDS('../../interception/data/met/met_main_th.rds') |> rename(TIMESTAMP = datetime)
+
+```
+
+## 15 Minute EC Data (3 m)
+
+```{r, echo=FALSE, warning=FALSE}
+
+ec_3m_post_long <- ec_3m_post |> 
+  pivot_longer(!TIMESTAMP)
+
+ec_3m_logr_long <- ec_3m_logr |> 
+  pivot_longer(!TIMESTAMP)
+
+ec_15m_logr_long <- ec_15m_logr |> 
+  pivot_longer(!TIMESTAMP)
+
+met_long <- met |> 
+  select(TIMESTAMP, where(is.numeric)) |> 
+  pivot_longer(!TIMESTAMP)
+
+df <- rbind(ec_3m_post_long, ec_3m_logr_long, ec_15m_logr_long, met_long)
+
+col_names <- unique(df$name)
+
+min_time_15 <- max(c(min(ec_3m_logr$TIMESTAMP), min(met$TIMESTAMP)))
+max_time_15 <- min(c(max(ec_3m_logr$TIMESTAMP), max(met$TIMESTAMP)))
+
+inputPanel(
+    selectInput(inputId = 'ec_3m_post_var', 
+              label = '3 m EC Post Processed Variables: ', 
+              choices = unique(ec_3m_post_long$name), 
+              selected = c("LE"), 
+              multiple = F),
+      selectInput(inputId = 'ec_3m_logr_var', 
+              label = '3 m EC Logger Variables: ', 
+              choices = unique(ec_3m_logr_long$name), 
+              selected = c("LE"), 
+              multiple = F),
+  selectInput(inputId = 'ec_15m_logr_var', 
+              label = '15 m EC Logger Variables: ', 
+              choices = unique(ec_15m_logr_long$name), 
+              selected = c("LE_irga"), 
+              multiple = F),
+  selectInput(inputId = 'met_var', 
+              label = 'Met Tower Variables: ', 
+              choices = unique(met_long$name), 
+              selected = c("SnowDepth"), multiple = T),
+  numericInput(
+    inputId = 'fig_height',
+    label = 'Figure Height in Pixels:',
+    value = 250),
+      numericInput(
+    inputId = 'th_hi',
+    label = 'Max Threshold:',
+    value = 100),
+      numericInput(
+    inputId = 'th_low',
+    label = 'Min Threshold:',
+    value = -100
+  )
+)
+
+
+renderUI({
+  sliderInput(inputId = "sliderTimeRange", label = "",
+              min = min_time_15,
+              max = max_time_15,
+              value = c(min_time_15,
+                        max_time_15),
+              step = 3600,
+              width = '100%',
+              height )
+})
+```
+
+```{r, echo=FALSE}
+ec_3m_post_long_fltr <-  reactive({
+  req(input$ec_3m_post_var)
+  req(input$sliderTimeRange)
+  
+  ec_3m_post_long |> 
+    filter(name %in% c(input$ec_3m_post_var),
+          TIMESTAMP >= input$sliderTimeRange[1] & TIMESTAMP <= input$sliderTimeRange[2],
+          value < input$th_hi,
+          value > input$th_low) |> 
+    mutate(group = paste0('3m_post_', input$ec_3m_post_var))
+})
+
+```
+
+```{r, echo=FALSE}
+ec_3m_logr_long_fltr <-  reactive({
+  req(input$ec_3m_logr_var)
+  req(input$sliderTimeRange)
+  
+  ec_3m_logr_long |> 
+    filter(name %in% c(input$ec_3m_logr_var),
+          TIMESTAMP >= input$sliderTimeRange[1] & TIMESTAMP <= input$sliderTimeRange[2],
+          value < input$th_hi,
+          value > input$th_low) |> 
+    mutate(group = paste0('3m_logr_', input$ec_3m_logr_var))
+})
+
+```
+
+```{r, echo=FALSE}
+ec_15m_logr_long_fltr <-  reactive({
+  req(input$ec_15m_logr_var)
+  req(input$sliderTimeRange)
+  
+  ec_15m_logr_long |> 
+    filter(name %in% c(input$ec_15m_logr_var),
+          TIMESTAMP >= input$sliderTimeRange[1] & TIMESTAMP <= input$sliderTimeRange[2],
+          value < input$th_hi,
+          value > input$th_low) |> 
+    mutate(group = paste0('15m_logr_', input$ec_15m_logr_var))
+})
+
+```
+
+```{r, echo=FALSE}
+ec_bind <-  reactive({
+  req(ec_15m_logr_long_fltr)
+  req(input$sliderTimeRange)
+  
+  rbind(ec_3m_post_long_fltr(), ec_3m_logr_long_fltr()) |> rbind(ec_15m_logr_long_fltr())
+})
+
+```
+
+```{r, echo=FALSE}
+output$ec_bind_plot <- renderPlot(
+      ggplot(data = ec_bind(), aes(x = TIMESTAMP, y = value, colour = group)) +
+        geom_line() +
+        theme(
+          axis.title.y = element_blank(),
+          axis.title.x = element_blank(),
+          legend.position = 'bottom'
+        )
+)
+
+renderUI({
+  plotOutput('ec_bind_plot', height = input$fig_height)
+})
+
+```
+
+```{r, echo=FALSE}
+met_long_fltr <-  reactive({
+  req(input$ec_15m_logr_var)
+  req(input$sliderTimeRange)
+  
+  met_long |> 
+    filter(name %in% c(input$met_var),
+          TIMESTAMP >= input$sliderTimeRange[1] & TIMESTAMP <= input$sliderTimeRange[2],
+          value < input$th_hi,
+          value > input$th_low)
+})
+
+```
+
+```{r, echo=FALSE}
+output$met_plot <- renderPlot(
+      ggplot(data = met_long_fltr(), aes(x = TIMESTAMP, y = value)) +
+        geom_line() +
+        theme(
+          axis.title.y = element_blank(),
+          axis.title.x = element_blank()
+        ) +
+        facet_grid(rows = vars(name),scales = 'free')
+)
+
+renderUI({
+  plotOutput('met_plot', height = input$fig_height)
+})
+
+```
