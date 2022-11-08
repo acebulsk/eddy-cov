@@ -28,11 +28,12 @@ ec_3m_post <- ec_raw_compute[2:nrow(ec_raw_compute),]
 
 ec_3m_post <- ec_3m_post |> 
   mutate(
-    TIMESTAMP = as.POSIXct(paste(date, time), tz = 'GMT-6'),
+    datetime = as.POSIXct(paste(date, time), tz = 'GMT-6'),
     across(DOY:w.h2o_cov, as.numeric)) |> 
-  select(TIMESTAMP, DOY:w.h2o_cov)
+  select(datetime, DOY:w.h2o_cov)
 
 ec_3m_logr <- readRDS('../data/eddy_cov_15min_combined.rds') |> 
+  rename(datetime = TIMESTAMP) |> 
   mutate(LE = -LE)
 
 # raw
@@ -43,10 +44,10 @@ ec_3m_logr <- readRDS('../data/eddy_cov_15min_combined.rds') |>
 
 # 15 m EC data
 
-ec_15m_logr <- readRDS('../../interception/data/met/waterloo_1000_ec_main.rds')
+ec_15m_logr <- readRDS('../../met-data-processing/data/waterloo_1000_ec_main.rds')
 
 # met data from all loggers 
-met <- readRDS('../../interception/data/met/met_main_th.rds') |> rename(TIMESTAMP = datetime)
+met <- readRDS('../../met-data-processing/data/met_main_th.rds') 
 
 ```
 
@@ -55,24 +56,24 @@ met <- readRDS('../../interception/data/met/met_main_th.rds') |> rename(TIMESTAM
 ```{r, echo=FALSE, warning=FALSE}
 
 ec_3m_post_long <- ec_3m_post |> 
-  pivot_longer(!TIMESTAMP)
+  pivot_longer(!datetime)
 
 ec_3m_logr_long <- ec_3m_logr |> 
-  pivot_longer(!TIMESTAMP)
+  pivot_longer(!datetime)
 
 ec_15m_logr_long <- ec_15m_logr |> 
-  pivot_longer(!TIMESTAMP)
+  pivot_longer(!datetime)
 
 met_long <- met |> 
-  select(TIMESTAMP, where(is.numeric)) |> 
-  pivot_longer(!TIMESTAMP)
+  select(datetime, where(is.numeric)) |> 
+  pivot_longer(!datetime)
 
 df <- rbind(ec_3m_post_long, ec_3m_logr_long, ec_15m_logr_long, met_long)
 
 col_names <- unique(df$name)
 
-min_time_15 <- max(c(min(ec_3m_logr$TIMESTAMP), min(met$TIMESTAMP)))
-max_time_15 <- min(c(max(ec_3m_logr$TIMESTAMP), max(met$TIMESTAMP)))
+min_time_15 <- max(c(min(ec_3m_logr$datetime), min(met$datetime)))
+max_time_15 <- min(c(max(ec_3m_logr$datetime), max(met$datetime)))
 
 inputPanel(
     selectInput(inputId = 'ec_3m_post_var', 
@@ -129,7 +130,7 @@ ec_3m_post_long_fltr <-  reactive({
   
   ec_3m_post_long |> 
     filter(name %in% c(input$ec_3m_post_var),
-          TIMESTAMP >= input$sliderTimeRange[1] & TIMESTAMP <= input$sliderTimeRange[2],
+          datetime >= input$sliderTimeRange[1] & datetime <= input$sliderTimeRange[2],
           value < input$th_hi,
           value > input$th_low) |> 
     mutate(group = paste0('3m_post_', input$ec_3m_post_var))
@@ -144,7 +145,7 @@ ec_3m_logr_long_fltr <-  reactive({
   
   ec_3m_logr_long |> 
     filter(name %in% c(input$ec_3m_logr_var),
-          TIMESTAMP >= input$sliderTimeRange[1] & TIMESTAMP <= input$sliderTimeRange[2],
+          datetime >= input$sliderTimeRange[1] & datetime <= input$sliderTimeRange[2],
           value < input$th_hi,
           value > input$th_low) |> 
     mutate(group = paste0('3m_logr_', input$ec_3m_logr_var))
@@ -159,7 +160,7 @@ ec_15m_logr_long_fltr <-  reactive({
   
   ec_15m_logr_long |> 
     filter(name %in% c(input$ec_15m_logr_var),
-          TIMESTAMP >= input$sliderTimeRange[1] & TIMESTAMP <= input$sliderTimeRange[2],
+          datetime >= input$sliderTimeRange[1] & datetime <= input$sliderTimeRange[2],
           value < input$th_hi,
           value > input$th_low) |> 
     mutate(group = paste0('15m_logr_', input$ec_15m_logr_var))
@@ -179,7 +180,7 @@ ec_bind <-  reactive({
 
 ```{r, echo=FALSE}
 output$ec_bind_plot <- renderPlot(
-      ggplot(data = ec_bind(), aes(x = TIMESTAMP, y = value, colour = group)) +
+      ggplot(data = ec_bind(), aes(x = datetime, y = value, colour = group)) +
         geom_line() +
         theme(
           axis.title.y = element_blank(),
@@ -201,7 +202,7 @@ met_long_fltr <-  reactive({
   
   met_long |> 
     filter(name %in% c(input$met_var),
-          TIMESTAMP >= input$sliderTimeRange[1] & TIMESTAMP <= input$sliderTimeRange[2],
+          datetime >= input$sliderTimeRange[1] & datetime <= input$sliderTimeRange[2],
           value < input$th_hi,
           value > input$th_low)
 })
@@ -210,7 +211,7 @@ met_long_fltr <-  reactive({
 
 ```{r, echo=FALSE}
 output$met_plot <- renderPlot(
-      ggplot(data = met_long_fltr(), aes(x = TIMESTAMP, y = value)) +
+      ggplot(data = met_long_fltr(), aes(x = datetime, y = value)) +
         geom_line() +
         theme(
           axis.title.y = element_blank(),
