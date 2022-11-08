@@ -10,13 +10,21 @@ general_log_note <-
 The 3m ec system has not been checked for the serial number as of yet but Lindsey said safe to assume 
 since the other EC SN 1527 is in the lab."
 
+# functions
+
+rho_w <- function(vh, v_0, xkw) {
+  rho_w <- (log(vh) - log(v_0))/-xkw # g / m3, equation is A-3 from KH20 manual
+  
+  return(rho_w)
+}
+
 # Calibration Values from Campbell Sci 2016-10-13 cal on SN 1528, chose to use dry scaled value as this is what was done before in the programs
 
 cals <- read.csv('../../field-downloads/met-data/hi-freq/calibrations/2022_10_16_kh2o_1528_cal_data.csv')
 
-v_0 <- cals$Intercept[cals$WINDOWS == 'CLEAN' & cals$VAPOUR_RANGE == 'DRY 1.79-9.21 gm3'] # Input Voltage at KH20
-kw <- cals$Kw[cals$WINDOWS == 'CLEAN' & cals$VAPOUR_RANGE == 'DRY 1.79-9.21 gm3'] # scaled, dry vapour range [m^3 / (g cm)]
-x <- cals$PATH_CM[cals$WINDOWS == 'CLEAN' & cals$VAPOUR_RANGE == 'DRY 1.79-9.21 gm3'] # Path length of KH20 (cm)
+v_0 <- cals$Intercept[cals$WINDOWS == 'SCALED' & cals$VAPOUR_RANGE == 'DRY 1.82-9.27 gm3'] # Input Voltage at KH20
+kw <- cals$Kw[cals$WINDOWS == 'SCALED' & cals$VAPOUR_RANGE == 'DRY 1.82-9.27 gm3'] # scaled, dry vapour range [m^3 / (g cm)]
+x <- cals$PATH_CM[cals$WINDOWS == 'SCALED' & cals$VAPOUR_RANGE == 'DRY 1.82-9.27 gm3'] # Path length of KH20 (cm)
 xkw <- x * kw  # Path Length * Water Vapor absorption coefficient (m^3 / g)
 
 # Create temp log file location
@@ -66,21 +74,21 @@ filename_filter <- df_compare$filename[is.na(df_compare$filename) == F]
 
 # look at one file to check calculations
 
-# df <- wxlogR::load_CS_1000(paste0(raw_path, l[7000]), timezone = 'GMT-6')
-# 
-# df$rho_w <- (log(df$vh) - log(V_0)) / -xkw # g / m3, equation is A-3 from KH20 manual
+df <- wxlogR::load_CS_1000(paste0(raw_path, l[7000]), timezone = 'GMT-6')
+
+rho_w(df$vh, v_0, xkw)
 
 # check calculated water vapour density against absolute humidity, not sure if this is appropriate comparison as does not match up well for Feb 10, 2022 - maybe instrument error.
 
-# met <- readRDS('../../analysis/interception/data/met/met_main_th.rds') |>
-#   select(TIMESTAMP = datetime, AirTC_towerTop, RH_towerTop) |>
-#   mutate(TIMESTAMP = round(TIMESTAMP, "mins"))
-# 
-# ec <- df |> mutate(TIMESTAMP = round(TIMESTAMP, "mins"))
-# 
-# ec_met <- left_join(ec, met)
-# 
-# ec_met$rho_air <- psychRomet::absolute_humidity(ec_met$AirTC_towerTop, ec_met$RH_towerTop/100) * 1000
+met <- readRDS('../../analysis/interception/data/met/met_main_th.rds') |>
+  select(TIMESTAMP = datetime, AirTC_towerTop, RH_towerTop) |>
+  mutate(TIMESTAMP = round(TIMESTAMP, "mins"))
+
+ec <- df |> mutate(TIMESTAMP = round(TIMESTAMP, "mins"))
+
+ec_met <- left_join(ec, met)
+
+ec_met$rho_air <- psychRomet::absolute_humidity(ec_met$AirTC_towerTop, ec_met$RH_towerTop/100) * 1000
 
 
 calc_rho_w <- function(file_in, file_out) {
@@ -97,7 +105,7 @@ calc_rho_w <- function(file_in, file_out) {
   
   df <- wxlogR::load_CS_1000(paste0(raw_path, file_in), timezone = 'GMT-6')
   
-  df$rho_w <- (log(df$vh) - log(v_0)) / -xkw # g / m3, equation is A-3 from KH20 manual
+  df$rho_w <- rho_w(df$vh, v_0, xkw) # g / m3, equation is A-3 from KH20 manual
   
   df <- df[c('Ux', 'Uy', 'Uz', 'Ts', 'rho_w')]
   
