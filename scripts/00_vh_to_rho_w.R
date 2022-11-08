@@ -12,12 +12,12 @@ since the other EC SN 1527 is in the lab."
 
 # Calibration Values from Campbell Sci 2016-10-13 cal on SN 1528, chose to use dry scaled value as this is what was done before in the programs
 
-cals <- read.csv('../../../field-downloads/met-data/hi-freq/calibrations/2022_10_16_kh2o_1528_cal_data.csv')
+cals <- read.csv('../../field-downloads/met-data/hi-freq/calibrations/2022_10_16_kh2o_1528_cal_data.csv')
 
 v_0 <- cals$Intercept[cals$WINDOWS == 'CLEAN' & cals$VAPOUR_RANGE == 'DRY 1.79-9.21 gm3'] # Input Voltage at KH20
 kw <- cals$Kw[cals$WINDOWS == 'CLEAN' & cals$VAPOUR_RANGE == 'DRY 1.79-9.21 gm3'] # scaled, dry vapour range [m^3 / (g cm)]
 x <- cals$PATH_CM[cals$WINDOWS == 'CLEAN' & cals$VAPOUR_RANGE == 'DRY 1.79-9.21 gm3'] # Path length of KH20 (cm)
-xkw <- x * KW_high  # Path Length * Water Vapor absorption coefficient (m^3 / g)
+xkw <- x * kw  # Path Length * Water Vapor absorption coefficient (m^3 / g)
 
 # Create temp log file location
 path <- paste0("ec-high-freq-processing_", format(Sys.time(), "%Y_%m_%d_%H%M"), ".log")
@@ -44,7 +44,7 @@ string_check <- gsub('.*highfreq_|.dat.*', "", l_sub)
 # strptime cannot handle hour mins with no separator 
 fix_string <- paste0(substr(string_check, 1,13), ':', substr(string_check, 14,15))
 
-date_check <- as.POSIXct(strptime(fix_string, "%Y_%m_%d_%H:%M"), tz = 'GMT-6')
+date_check <- as.POSIXct(fix_string, "%Y_%m_%d_%H:%M", tz = 'GMT-6')
 
 # now we need to reduce the raw files list too rm duplicates
 df_check <- data.frame(datetime = date_check, filename = l_sub, val = 1)
@@ -57,6 +57,7 @@ df_check_reduce <- df_check_reduce[!duplicated(df_check_reduce$datetime),]
 wxlogR::plot_data_gaps(df_check_reduce$datetime)
 
 full_seq <- wxlogR::datetime_seq_full(df_check_reduce$datetime)
+
 df_full <- data.frame(datetime = full_seq)
 
 df_compare <- dplyr::left_join(df_full, df_check_reduce)
@@ -110,7 +111,6 @@ calc_rho_w <- function(file_in, file_out) {
 # file_range <- 1:10
 
 file_out_list <- paste0('FFR_low_ec_',gsub('.*highfreq_|', "", filename_filter))
-
 
 parallel::mcmapply(calc_rho_w, filename_filter, file_out_list, mc.cores = 7)
 
