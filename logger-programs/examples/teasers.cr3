@@ -1,0 +1,141 @@
+'CR3000 Series Datalogger '28 December 2006
+'Copyright (c) 2006 Campbell Scientific, Inc. All rights reserved.
+'The following sensors are measured:
+'
+'CSAT3 three dimensional sonic anemometer
+'The site attendant must load in several constants and calibration values. Search 'for the text string "unique" to find the locations where unique constants and 'calibration values are entered.
+PipeLineMode
+'*** Constants *** 'Measurement Rate  10Hz
+Const SCAN_INTERVAL = 100   'mSec
+'Output period
+Const OUTPUT_INTERVAL = 30
+Const CSAT3_AZIMUTH = 0
+'Compass azimuth of the -x axis. For the figure below, CSAT3_AZIMUTH = 90. '() -> Compass coordinate system
+'{} -> Right handed coordinate system
+
+'The program computes the compass wind direction, using the constant 'CSAT3_AZIMUTH, and a CSAT3 wind direction. Good CSAT3 wind directions 'are between -90 to 0 and 0 to 90 degrees, e.g. the wind is blowing into
+'the CSAT3 sensor head.
+Const CSAT_OPT = INT (1000/SCAN_INTERVAL)
+ Const SDM_PER = 30
+'*** Variables ***
+'Online lagged CSAT3 data.
+Public wind(5)
+Alias wind(1) = Ux
+Alias wind(2) = Uy
+Alias wind(3) = Uz
+Alias wind(4) = Ts
+Alias wind(5) = diag_csat 
+Units Ux = m/s
+Units Uy = m/s
+Units Uz = m/s
+Units Ts = C
+Units diag_csat = unitless
+Public diag_bits(4) 
+As Boolean 
+Alias diag_bits(1) = del_T_f 
+Alias diag_bits(2) = sig_lck_f 
+Alias diag_bits(3) = amp_h_f 
+Alias diag_bits(4) = amp_l_f 
+Units diag_bits = Sample
+Public batt_volt 
+Public panel_temp 
+Units batt_volt = V 
+Units panel_temp = C
+'Compute CSAT3 Execution Parameter. 'Default SDM clock speed.
+'CSAT3 Three Dimensional Sonic Anemometer
+
+'Wind directions and speed.
+Dim wnd_out(8)
+'Alias wnd_out(1) = wnd_spd - in compass coordinate system, same as CSAT3. 'Alias wnd_out(2) = rslt_wnd_spd - in compass coordinate system, same as CSAT3. Alias wnd_out(3) = wnd_dir_compass
+'Alias wnd_out(4) = std_wnd_dir - in compass coordinate system, same as CSAT3. Alias wnd_out(5) = wnd_spd
+Alias wnd_out(6) = rslt_wnd_spd
+Alias wnd_out(7) = wnd_dir_csat3
+Alias wnd_out(8) = std_wnd_dir
+Units wnd_dir_compass = degrees
+Units wnd_spd = m/s
+Units rslt_wnd_spd = m/s
+Units wnd_dir_csat3 = degrees
+Units std_wnd_dir = degrees
+'￼'Diagnostic variables.
+Dim disable_flag_on(2) AS Boolean Dim n
+Units n = samples
+'Working variables.
+Dim wind_east
+Dim wind_north
+Dim diag_csat_work AS Long
+'*** Final Output Data Tables ***
+'Online stats data.
+DataTable (stats,TRUE,-1)
+DataInterval (0,OUTPUT_INTERVAL,Min,10)
+Average (1,Ts,IEEE4,disable_flag_on(1)) 
+StdDev (1,Ts,IEEE4,disable_flag_on(1)) 
+Average (1,Ux,IEEE4,disable_flag_on(1)) 
+StdDev (1,Ux,IEEE4,disable_flag_on(1)) 
+Average (1,Uy,IEEE4,disable_flag_on(1)) 
+StdDev (1,Uy,IEEE4,disable_flag_on(1)) 
+Average (1,Uz,IEEE4,disable_flag_on(1)) 
+StdDev (1,Uz,IEEE4,disable_flag_on(1))
+Sample (1,wnd_dir_compass,IEEE4) 
+Sample (1,wnd_dir_csat3,IEEE4) 
+Sample (1,wnd_spd,IEEE4)
+Sample (1,rslt_wnd_spd,IEEE4) 
+Sample (1,std_wnd_dir,IEEE4)
+Totalize (1,n,IEEE4,disable_flag_on(1))
+'Intermediate processing disable flags. 'Number of samples in the online stats.
+'East wind in compass coordinate system. 'North wind in compass coordinate system.
+'Totalize (1,n,IEEE4,NOT (disable_flag_on(1) OR disable_flag_on(2))) FieldNames ("csat_warnings")
+'Totalize (1,n,IEEE4,NOT (del_T_f) OR NOT (disable_flag_on(2))) FieldNames ("del_T_f_Tot")
+'Totalize (1,n,IEEE4,NOT (sig_lck_f) OR NOT (disable_flag_on(2))) FieldNames ("sig_lck_f_Tot")
+'Totalize (1,n,IEEE4,NOT (amp_h_f) OR NOT (disable_flag_on(2))) FieldNames ("amp_h_f_Tot")
+'Totalize (1,n,IEEE4,NOT (amp_l_f) OR NOT (disable_flag_on(2))) FieldNames ("amp_l_f_Tot")
+'Average (1,panel_temp,IEEE4,FALSE)
+'Average (1,batt_volt,IEEE4,FALSE) EndTable
+'*** Working Data Tables ***
+'Compute the wind direction This data is output every OUTPUT_INTERVAL minutes.
+DataTable (wnd_vec,TRUE,1)
+DataInterval (0,OUTPUT_INTERVAL,Min,1)
+'Compute wind direction from CSAT3 data.
+WindVector (1,wind_east,wind_north,IEEE4,disable_flag_on(1),0,1,2)
+WindVector (1,Uy,Ux,IEEE4,disable_flag_on(1),0,1,2) 
+EndTable
+'*** Program ***
+BeginProg 
+  n=1
+'Set all CSAT3 variables to NaN.
+Move (Ux,5,NaN,1)
+'Set the SDM clock speed.
+SDMSpeed (SDM_PER)
+Scan (SCAN_INTERVAL,mSec,3,0)
+'CRBasic datalogger panel temperature.
+PanelTemp (panel_temp,250)
+'Get CSAT3 wind and sonic temperature data.
+CSAT3 (Ux,1,3,91,CSAT_OPT)
+'Measure battery voltage.
+Battery (batt_volt)
+'Copy and convert CSAT3 for compass wind vector computation.
+wind_east = -1*Uy 
+wind_north = Ux
+'Define 61502 as NaN.
+If ( diag_csat = NaN ) Then ( diag_csat = 61502 )
+'Break up the four CSAT3 warning flags into four separate bits.
+diag_csat_work = diag_csat
+del_T_f = diag_csat_work AND &h8000 
+sig_lck_f = diag_csat_work AND &h4000 
+amp_h_f = diag_csat_work AND &h2000 
+amp_l_f = diag_csat_work AND &h1000
+'Turn on the intermediate processing disable flag when any CSAT3 warning flag is
+'high, including the special cases NaN (61502), a Lost Trigger (61440), No Data '(61503), an SDM error (61441), or wrong CSAT3 embedded code (61442). disable_flag_on(1) = diag_csat_work AND &hf000
+'Turn on only when CSAT3 diagnostic warning flags are set.
+disable_flag_on(2) = ( disable_flag_on(1) AND NOT (Ts = NaN) )
+'Save the four most significant bits of the CSAT3 diagnostics, except for the
+'special cases NaN (61502), a Lost Trigger (61440), No Data (61503), an SDM 'error (61441), or wrong CSAT3 embedded code (61442).
+If ( diag_csat_work < &hf000 ) Then ( diag_csat = INT (diag_csat_work/&h1000) )
+'Compute the online wind vector statistics.
+CallTable wnd_vec
+If ( wnd_vec.Output(1,1) ) Then GetRecord (wnd_out(1),wnd_vec,1)
+'Compass wind direction will be between 0 and 360 degrees.
+wnd_dir_compass = (wnd_dir_compass+CSAT3_AZIMUTH) MOD 360
+'CSAT3 wind direction will be between 0 to 180 degrees and 0 to -180 degrees.
+If ( wnd_dir_csat3 ) > 180 Then ( wnd_dir_csat3 = wnd_dir_csat3-360 ) EndIf
+CallTable stats NextScan
+EndProg

@@ -1,0 +1,35 @@
+Program Trace Information File for:  particlecounter.csi
+Date: 2/3/2015
+Time: 15:55:22
+
+T = Program Table Number
+N = Sequential Program Instruction Location Number
+Instruction = Instruction Number and Name
+
+Inst ExTm = Individual Instruction Execution Time
+Block ExTm = Cumulative Execution Time for program block,
+             i.e., subroutine
+Prog ExTm = Cumulative Total Program Execution Time
+
+                                                          Output Flag High
+                                   Inst  Block   Prog     Inst  Block   Prog
+                                   ExTm   ExTm   ExTm     ExTm   ExTm   ExTm
+T|N|Instruction                   (msec) (msec) (msec)   (msec) (msec) (msec)
+---------------                   ------ ------ ------   ------ ------ ------
+1|1|3 Pulse                         1.4    1.4    1.4      1.4    1.4    1.4
+1|2|92 If time is                   0.3    1.7    1.7      0.3    1.7    1.7
+ Output Flag Set @ 12 for Array 100
+1|3|80 Set Active Storage Area      0.2    1.9    1.9      0.2    1.9    1.9
+1|4|78 Resolution                   0.4    2.3    2.3      0.4    2.3    2.3
+1|5|71 Average                      1.4    3.7    3.7      5.1    7.4    7.4
+ Output Data 1 Values
+
+Program Table 1 Execution Interval   60.000 Seconds
+
+Table 1 Estimated Total Program Execution Time in msec    3.7 w/Output    7.4
+
+Table 1 Estimated Total Final Storage Locations used per day 2880
+
+
+
+Estimated Total Final Storage Locations used per day 2880

@@ -1,0 +1,462 @@
+'CR3000 Series Datalogger - SN 
+'Location                 - Blowing Snow Experiment, Fortress Mountain Ski Area, Kananaskis, AB
+'GPS Location             - 
+'GPS Elevation            - 
+'Program Author           - May Guan
+'Date                     - Nov 25, 2014
+
+'*******************************************************************************************
+'To-Do: 
+'Nov 25 notes - add sensor depths, add fourth SR50-45 when tranducer arrives 
+
+'*******************************************************************************************
+
+'*******************************************************************************************
+' Program Name: FortressBSnowSR50K01.cr3
+'*******************************************************************************************
+'Revision History (starting with the most recent revision)
+'  Revision made by: 
+'  Revision Date: 
+'  Details of Revision: 
+'  Old Program Name:
+'  New Program Name: 
+'*******************************************************************************************
+
+'*******************************************************************************************
+'Program Function: Log snow depth with four SR50-45 at 5 min interval, array of 11 using median 
+'air temp, rel humidity, snow surface temperature 
+'*******************************************************************************************
+
+'*******************************************************************************************
+'Sensors:            Function                S/N        Installation height      Calibration
+'SR50-45             Snow depth              C1044                               N/A
+'SR50-45             Snow depth              C1082                               N/A
+'SR50-45             Snow depth              C3670                               N/A
+'SR50-45             Snow depth              C4418                               N/A
+'HC-S3               Air temp/RH             61233688
+'IRTC-type K         Snow surface temp and air temp
+      'yellow and red
+'*******************************************************************************************
+
+'*******************************************************************************************
+'Wiring Details
+'SE1  (1H):  HC-S3        BROWN          Temperature Signal
+'SE2  (1L):  HC-S3        BLUE           Signal Reference
+'G:
+'SE3  (2H):  HC-S3        WHITE          RH Signal
+'SE4  (2L):  Jumper to 1L                RH Reference
+'G:          HC-S3        CLEAR          Shield
+'SE5  (3H):  
+'SE6  (3L):
+'G:                  
+'SE7  (4H):  
+'SE8  (4L):  
+'G:          
+'SE9  (4H): IRTC             YELLOW      Temperature Reference 
+'SE10 (4L): IRTC              RED         Temperature Signal 
+'G:          
+'SE9  (6H): IRTCAIR                YELLOW      Temperature Reference 
+'SE10 (6L): IRTCAIR                 RED         Temperature Signal 
+'G:          
+'SE13 (7H): 
+'SE14 (7L):  
+'G:          
+'SE15 (8H):  
+'SE16 (8L):
+'G:          
+'SE17 (9H):  
+'SE18 (9L):  
+'G:         
+'SE19 (10H)
+'SE20 (10L): 
+'
+'G:
+'SE21 (11H): 
+'SE22 (11L): 
+'G:          
+'SE23 (12H):
+'SE24 (12L):
+'G:
+'SE25 (13H):
+'SE26 (13L):
+'
+'G:
+'SE27 (14H):
+'SE28 (14L):
+'G:
+
+'VX1:      
+'VX2:       
+'G:         SR50C1044          WHITE          Ground
+'           SR50C4418          CLEAR          Shield           
+'           
+'VX3:
+'VX4:
+'G:         SR50C1082          WHITE          Ground
+'           SR50C4418          CLEAR          Shield        
+'            
+'           
+'CA1:
+'CA2:
+'G:         SR50C3670          WHITE          Ground
+'           SR50C4418          CLEAR          Shield
+'IX1:
+'IX2:
+'IX3:
+'IXR:
+'G:
+'P1:         
+'G:          
+'G:          
+'           
+'P3:         
+'G:          
+'            
+'P4:
+
+'C1:         SR50C1044      GREEN          SDI12 I/O
+'C2:        
+'C3:         SR50C1082      GREEN          SDI12 I/O
+'C4:        
+'G:          SR50C4418      WHITE          Ground
+'            SR50C4418      CLEAR          Shield
+'            
+'            
+'C5:         SR50C3670      GREEN          SDI12 I/O
+'C6:
+'C7:         SR50C4418      GREEN          SDI12 I/O
+'           
+'           
+'            
+'C8:
+'G:         
+'            
+'           
+'5V:         HC-S3        Green          Power 
+'G:          HC-S3        Grey           Power Ref 
+'SW1:
+'SW2:
+'G:          
+'            
+'            0C1044         RED            Power
+'            SR50C1082         RED            Power       
+'            
+'            
+'12V:        SR5
+'            
+'            
+'12V:        SR50C3670         RED            Power
+'            SR50C4418         RED            Power
+'            
+'G:          SR50x4            BLACK          Power Ground
+'           
+'            
+'SDM-C1:
+'SDM-C2:
+'SDM-C3:
+
+'******************************************************************************************
+'Declare Public Variables for Diagnostics
+'******************************************************************************************
+Public PTemp
+'******************************************************************************************
+'Declare constants
+'******************************************************************************************
+'SR50C1044
+Const SCAN_INTERVALC1044 = 10 'scan interval of main program in seconds
+Const AVERAGING_INTERVALC1044 = 5 'averaging period for sub-daily table in minutes
+Const NUM_SR50_SCANSC1044 = 11 ' number of SR50 measurements taken to compute median value - must be odd value
+Const MED_SR50_VALC1044 = ((NUM_SR50_SCANSC1044-1)/2)+1 'value to take from sorted SR50 distance table
+
+Const SCAN_INTERVALC1082 = 10 'scan interval of main program in seconds
+Const AVERAGING_INTERVALC1082 = 5 'averaging period for sub-daily table in minutes
+Const NUM_SR50_SCANSC1082 = 11 ' number of SR50 measurements taken to compute median value - must be odd value
+Const MED_SR50_VALC1082 = ((NUM_SR50_SCANSC1044-1)/2)+1 'value to take from sorted SR50 distance table
+
+Const SCAN_INTERVALC3670 = 10 'scan interval of main program in seconds
+Const AVERAGING_INTERVALC3670 = 5 'averaging period for sub-daily table in minutes
+Const NUM_SR50_SCANSC3670 = 11 ' number of SR50 measurements taken to compute median value - must be odd value
+Const MED_SR50_VALC3670 = ((NUM_SR50_SCANSC1044-1)/2)+1 'value to take from sorted SR50 distance table
+
+Const SCAN_INTERVALC4418 = 10 'scan interval of main program in seconds
+Const AVERAGING_INTERVALC4418 = 5 'averaging period for sub-daily table in minutes
+Const NUM_SR50_SCANSC4418 = 11 ' number of SR50 measurements taken to compute median value - must be odd value
+Const MED_SR50_VALC4418 = ((NUM_SR50_SCANSC1044-1)/2)+1 'value to take from sorted SR50 distance table
+
+'SR50A initial distance to the ground
+Const InitialDistanceC1044 = 0          'update distance to ground
+Const InitialDistanceC1082 = 0          'update distance to ground
+Const InitialDistanceC3670 = 0          'update distance to ground
+Const InitialDistanceC4418 = 0          'update distance to ground
+
+'******************************************************************************************
+'Declare Public Variables for Installed Sensors
+'******************************************************************************************
+'SR50-45 Sonic ranger
+Public SR50AC1044(2)
+Alias SR50AC1044(1)=RawDistanceC1044
+Alias SR50AC1044(2)=SignalQualityC1044
+Public TempCorDistanceC1044
+Public SnowDepthC1044
+Public SR50AReturnValuesC1044(NUM_SR50_SCANSC1044,2) As Float
+Public SR50ADistSortC1044(NUM_SR50_SCANSC1044) As Float
+Public SR50ASortC1044(NUM_SR50_SCANSC1044) As Float
+Public SR50AMeasureFlagC1044 As Boolean
+Dim SR50AcountC1044 As Float
+
+Public SR50AC1082(2)
+Alias SR50AC1082(1)=RawDistanceC1082
+Alias SR50AC1082(2)=SignalQualityC1082
+Public TempCorDistanceC1082
+Public SnowDepthC1082
+Public SR50AReturnValuesC1082(NUM_SR50_SCANSC1082,2) As Float
+Public SR50ADistSortC1082(NUM_SR50_SCANSC1082) As Float
+Public SR50ASortC1082(NUM_SR50_SCANSC1082) As Float
+Public SR50AMeasureFlagC1082 As Boolean
+Dim SR50AcountC1082 As Float
+
+Public SR50AC3670(2)
+Alias SR50AC3670(1)=RawDistanceC3670
+Alias SR50AC3670(2)=SignalQualityC3670
+Public TempCorDistanceC3670
+Public SnowDepthC3670
+Public SR50AReturnValuesC3670(NUM_SR50_SCANSC3670,2) As Float
+Public SR50ADistSortC3670(NUM_SR50_SCANSC3670) As Float
+Public SR50ASortC3670(NUM_SR50_SCANSC3670) As Float
+Public SR50AMeasureFlagC3670 As Boolean
+Dim SR50AcountC3670 As Float
+
+Public SR50AC4418(2)
+Alias SR50AC4418(1)=RawDistanceC4418
+Alias SR50AC4418(2)=SignalQualityC4418
+Public TempCorDistanceC4418
+Public SnowDepthC4418
+Public SR50AReturnValuesC4418(NUM_SR50_SCANSC4418,2) As Float
+Public SR50ADistSortC4418(NUM_SR50_SCANSC4418) As Float
+Public SR50ASortC4418(NUM_SR50_SCANSC4418) As Float
+Public SR50AMeasureFlagC4418 As Boolean
+Dim SR50AcountC4418 As Float
+
+'HC-S3 air temperature and relative humidity
+Public AirTemp
+Public RH
+Public RHcorrected
+Public SatVP_Water
+Public SatVP_Ice
+Public PartialVP
+
+'Type K Thermocouple
+Public IRTCair
+Public IRTC
+'******************************************************************************************
+'Declare units for installed sensors
+'******************************************************************************************
+'Panel Temp
+Units PTemp= Deg C
+
+'SR50-45 sonic ranger
+Units RawDistanceC1044=m
+Units SnowDepthC1044=m
+
+Units RawDistanceC1082=m
+Units SnowDepthC1082=m
+
+Units RawDistanceC3670=m
+Units SnowDepthC3670=m
+
+Units RawDistanceC4418=m
+Units SnowDepthC4418=m
+
+'HC-S3 air temperature and relative humidity
+Units AirTemp=Degrees C
+Units RH=%
+Units RHcorrected=%
+Units SatVP_Water=kPa
+Units SatVP_Ice=kPa
+Units PartialVP=kPa
+
+'Type K Thermocouple
+Units IRTCair=Degrees C
+Units IRTC=Degrees C
+'******************************************************************************************
+'5 minute meteorological Data Table
+'******************************************************************************************
+DataTable (FiveMin,True,-1)
+  DataInterval (0,5,min,10)
+  'Average (1,PTemp,FP2,False)
+  Sample (1,RawDistanceC1044,FP2)
+  Sample (1,SnowDepthC1044,FP2)
+  Sample (1,SignalQualityC1044,FP2)
+  Sample (1,RawDistanceC1082,FP2)
+  Sample (1,SnowDepthC1082,FP2)
+  Sample (1,SignalQualityC1082,FP2)
+  Sample (1,RawDistanceC3670,FP2)
+  Sample (1,SnowDepthC3670,FP2)
+  Sample (1,SignalQualityC3670,FP2)
+  Sample (1,RawDistanceC4418,FP2)
+  Sample (1,SnowDepthC4418,FP2)
+  Sample (1,SignalQualityC4418,FP2)
+  Average (1,AirTemp,FP2,False)
+  Average (1,RH,FP2,False)
+  Average (1,RHcorrected,FP2,False)
+  Average (1,IRTCair,FP2,False)
+  Average (1,IRTC,FP2,False)
+EndTable
+
+'******************************************************************************************
+'Main Program
+'******************************************************************************************
+
+BeginProg
+
+ Scan (10,Sec,0,0)
+
+    '**********************************o********************************************************
+    'sensor measurements
+    '******************************************************************************************
+    PanelTemp (PTemp,250)  
+
+'SR50-45 s/n C1044 sonic ranger: measure every 5 mins, median of 11 arrays
+If TimeIntoInterval (0,AVERAGING_INTERVALC1044,Min) Then SR50AMeasureFlagC1044 = TRUE
+    If SR50AMeasureFlagC1044 = TRUE Then
+      'perform 11 distance Measurements Back to Back
+      For SR50AcountC1044 = 1 To NUM_SR50_SCANSC1044
+        'Read the raw distance from the SR50A "M1!" command returns distance with quality
+        SDI12Recorder (SR50AReturnValuesC1044(SR50AcountC1044,1),1,0,"M1!",1.0,0)
+        SR50ADistSortC1044(SR50AcountC1044) = SR50AReturnValuesC1044(SR50AcountC1044,1)
+      Next
+      SortSpa (SR50ASortC1044(1),NUM_SR50_SCANSC1044,SR50ADistSortC1044(1))
+      'Find the median distance Value
+      RawDistanceC1044 = SR50ASortC1044(MED_SR50_VALC1044)
+      'find the corresponding Quality and Temperature
+      For SR50AcountC1044 = 1 To 11
+        'find the record with median distance and retrive the quality value
+        If SR50AReturnValuesC1044(SR50AcountC1044,1) = RawDistanceC1044 Then
+          SignalQualityC1044 = SR50AReturnValuesC1044(SR50AcountC1044,2)
+          ExitFor
+        EndIf
+      Next SR50AcountC1044
+      SR50AMeasureFlagC1044 = FALSE
+      
+      'Use air temperature measurement to calculate temperature corrected distance
+      TempCorDistanceC1044 = RawDistanceC1044*(SQR((AirTemp+273.15)/273.15))
+
+      'Subtract the corrected distance from the initial distance to get the snow depth
+      SnowDepthC1044 = InitialDistanceC1044 - TempCorDistanceC1044
+    EndIf
+    
+'SR50-45 s/n C1082 sonic ranger: measure every 5 mins, median of 11 arrays
+If TimeIntoInterval (0,AVERAGING_INTERVALC1082,Min) Then SR50AMeasureFlagC1082 = TRUE
+    If SR50AMeasureFlagC1082 = TRUE Then
+      'perform 11 distance Measurements Back to Back
+      For SR50AcountC1082 = 1 To NUM_SR50_SCANSC1082
+        'Read the raw distance from the SR50A "M1!" command returns distance with quality
+        SDI12Recorder (SR50AReturnValuesC1082(SR50AcountC1082,1),3,0,"M1!",1.0,0)
+        SR50ADistSortC1082(SR50AcountC1082) = SR50AReturnValuesC1082(SR50AcountC1082,1)
+      Next
+      SortSpa (SR50ASortC1082(1),NUM_SR50_SCANSC1082,SR50ADistSortC1082(1))
+      'Find the median distance Value
+      RawDistanceC1082 = SR50ASortC1082(MED_SR50_VALC1082)
+      'find the corresponding Quality and Temperature
+      For SR50AcountC1082 = 1 To 11
+        'find the record with median distance and retrive the quality value
+        If SR50AReturnValuesC1082(SR50AcountC1082,1) = RawDistanceC1082 Then
+          SignalQualityC1082 = SR50AReturnValuesC1082(SR50AcountC1082,2)
+          ExitFor
+        EndIf
+      Next SR50AcountC1082
+      SR50AMeasureFlagC1082 = FALSE
+      
+      'Use air temperature measurement to calculate temperature corrected distance
+      TempCorDistanceC1082 = RawDistanceC1082*(SQR((AirTemp+273.15)/273.15))
+
+      'Subtract the corrected distance from the initial distance to get the snow depth
+      SnowDepthC1082 = InitialDistanceC1082 - TempCorDistanceC1082
+    EndIf
+   
+'SR50-45 s/n C3670 sonic ranger: measure every 5 mins, median of 11 arrays
+If TimeIntoInterval (0,AVERAGING_INTERVALC3670,Min) Then SR50AMeasureFlagC3670 = TRUE
+    If SR50AMeasureFlagC3670 = TRUE Then
+      'perform 11 distance Measurements Back to Back
+      For SR50AcountC3670 = 1 To NUM_SR50_SCANSC3670
+        'Read the raw distance from the SR50A "M1!" command returns distance with quality
+        SDI12Recorder (SR50AReturnValuesC3670(SR50AcountC3670,1),5,0,"M1!",1.0,0)
+        SR50ADistSortC3670(SR50AcountC3670) = SR50AReturnValuesC3670(SR50AcountC3670,1)
+      Next
+      SortSpa (SR50ASortC3670(1),NUM_SR50_SCANSC3670,SR50ADistSortC3670(1))
+      'Find the median distance Value
+      RawDistanceC3670 = SR50ASortC3670(MED_SR50_VALC3670)
+      'find the corresponding Quality and Temperature
+      For SR50AcountC3670 = 1 To 11
+        'find the record with median distance and retrive the quality value
+        If SR50AReturnValuesC3670(SR50AcountC3670,1) = RawDistanceC3670 Then
+          SignalQualityC3670 = SR50AReturnValuesC3670(SR50AcountC3670,2)
+          ExitFor
+        EndIf
+      Next SR50AcountC3670
+      SR50AMeasureFlagC3670 = FALSE
+      
+      'Use air temperature measurement to calculate temperature corrected distance
+      TempCorDistanceC3670 = RawDistanceC3670*(SQR((AirTemp+273.15)/273.15))
+
+      'Subtract the corrected distance from the initial distance to get the snow depth
+      SnowDepthC3670 = InitialDistanceC3670 - TempCorDistanceC3670
+    EndIf
+
+'SR50-45 s/n C4418 sonic ranger: measure every 5 mins, median of 11 arrays
+If TimeIntoInterval (0,AVERAGING_INTERVALC4418,Min) Then SR50AMeasureFlagC4418 = TRUE
+    If SR50AMeasureFlagC4418 = TRUE Then
+      'perform 11 distance Measurements Back to Back
+      For SR50AcountC4418 = 1 To NUM_SR50_SCANSC4418
+        'Read the raw distance from the SR50A "M1!" command returns distance with quality
+        SDI12Recorder (SR50AReturnValuesC4418(SR50AcountC4418,1),7,0,"M1!",1.0,0)
+        SR50ADistSortC4418(SR50AcountC4418) = SR50AReturnValuesC4418(SR50AcountC4418,1)
+      Next
+      SortSpa (SR50ASortC4418(1),NUM_SR50_SCANSC4418,SR50ADistSortC4418(1))
+      'Find the median distance Value
+      RawDistanceC4418 = SR50ASortC4418(MED_SR50_VALC4418)
+      'find the corresponding Quality and Temperature
+      For SR50AcountC4418 = 1 To 11
+        'find the record with median distance and retrive the quality value
+        If SR50AReturnValuesC4418(SR50AcountC4418,1) = RawDistanceC4418 Then
+          SignalQualityC4418 = SR50AReturnValuesC4418(SR50AcountC4418,2)
+          ExitFor
+        EndIf
+      Next SR50AcountC4418
+      SR50AMeasureFlagC4418 = FALSE
+      
+      'Use air temperature measurement to calculate temperature corrected distance
+      TempCorDistanceC4418 = RawDistanceC4418*(SQR((AirTemp+273.15)/273.15))
+
+      'Subtract the corrected distance from the initial distance to get the snow depth
+      SnowDepthC4418 = InitialDistanceC4418 - TempCorDistanceC4418
+    EndIf
+
+ 'HC-S3 air temperature and humidity
+    VoltDiff (AirTemp,1,mV5000,1,True,0,_60Hz,0.1,-50)
+    VoltDiff (RH,1,mV5000,2,True,0,_60Hz,0.1,0)
+
+    'Calculate saturation vapour pressure for the RH corrected values. RH is corrected for
+    'saturated vapour pressure when Air Temp is < 0 Deg C
+    SatVP (SatVP_Water,AirTemp)
+    SatVP_Ice = -0.00486 + 0.85471*SatVP_Water + 0.2441*SatVP_Water^2
+    PartialVP = SatVP_Water*RH
+    If AirTemp > 0 Then
+      RHcorrected = PartialVP/SatVP_Water
+    Else
+      RHcorrected = PartialVP/SatVP_Ice
+    EndIf
+    If RHcorrected > 100 Then
+      RHcorrected = 100
+    EndIf
+
+'Type K Thermocouple
+    TCDiff (IRTCair,1,mV20C,6,TypeK,PTemp,True ,0,_60Hz,1.0,0)
+    TCDiff (IRTC,1,mV20C,4,TypeK,IRTCair,True ,0,_60Hz,1.0,0)
+    '******************************************************************************************
+    'Output data
+    '******************************************************************************************
+    CallTable (FiveMin)
+   NextScan
+  EndProg
+  

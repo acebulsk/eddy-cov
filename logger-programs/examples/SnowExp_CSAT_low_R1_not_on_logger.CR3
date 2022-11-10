@@ -49,13 +49,13 @@ Const CSAT_DELAY = 4 '(4 scan delay (2(1 scan delay)) - delay for CSAT to match 
 
 'Latent heat constants (KH20)
 'KH20_low' SN1527
-Const XKW_high = -0.181 'sensor specific S/N 1527, scaled, dry vapour range
-Const Cp_high = 1005 'approximate heat capacity of air
-Const LV_high = 2835 'approx. latent heat of sublimation at 0C
-Const RHO_high = 1.204 ' estimate air density
+Const XKW_low = -0.185 'sensor specific S/N 1527, scaled, dry vapour range
+Const Cp_low = 1005 'approximate heat capacity of air
+Const LV_low = 2835 'approx. latent heat of sublimation at 0C
+Const RHO_low = 1.204 ' estimate air density
 
 Const x = 1  ' Path length of KH20 (cm)
-Const xkw = (-1) * x * XKW_high  'Path Length * Water Vapor absorbtion coefficient (M^3 / g)
+Const xkw = (-1) * x * XKW_low  'Path Length * Water Vapor absorbtion coefficient (M^3 / g)
 Public rho_w
 Units rho_w = g/m^3
 
@@ -169,14 +169,14 @@ EndTable
 
 'Table of computed covariances
 DataTable (comp_cov,TRUE,1)
-  DataInterval (0,15,Min,1)
+  DataInterval (0,5,Min,1)
   Covariance (5,cov_in(),IEEE4,(intermed_disable OR NOT (flag(7))),15)
   WindVector (1,wind_easting,wind_northing,IEEE4,(intermed_disable OR NOT (flag(7))),0,1,2)
 EndTable
 
 'Table of 5-minute computed fluxes
-DataTable (flux15,1,-1)' WHAT SIZE SHOULD THIS BE????
-  DataInterval (0,15,Min,10)
+DataTable (flux5,1,-1)' WHAT SIZE SHOULD THIS BE????
+  DataInterval (0,5,Min,10)
   CardOut (0 ,-1)
   Sample (1,LE,IEEE4)
   Sample(1,Hs,IEEE4)
@@ -306,14 +306,14 @@ BeginProg
     wnd_dir_compass = wnd_dir_compass MOD 360
 
 'compute the on-line fluxes
-    LE = LV_high * Uz_ln_vh/xkw
-    Hs = RHO_high * Cp_high * Uz_Ts
-    tau = RHO_high*SQR((Ux_Uz)^2 + (Uy_Uz)^2)
-    u_star = SQR(tau/RHO_high)
+    LE = LV_low * Uz_ln_vh/xkw
+    Hs = RHO_low * Cp_low * Uz_Ts
+    tau = RHO_low*SQR((Ux_Uz)^2 + (Uy_Uz)^2)
+    u_star = SQR(tau/RHO_low)
 
   EndIf
 
-  CallTable flux15
+  CallTable flux5
 NextScan
 
 '****** Beginning of Auxiliary Measurement section

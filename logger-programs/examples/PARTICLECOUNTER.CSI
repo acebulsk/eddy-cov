@@ -1,0 +1,83 @@
+;{21X}
+;
+*Table 1 Program
+  01: 60        Execution Interval (seconds)
+
+1:  Pulse (P3)
+ 1: 1        Reps
+ 2: 1        Pulse Input Channel
+ 3: 0        High Frequency, All Counts
+ 4: 1        Loc [ freq      ]
+ 5: 1.0      Multiplier
+ 6: 0.0      Offset
+
+
+
+2:  If time is (P92)
+ 1: 0000     Minutes into a
+ 2: 2        Minute Interval
+ 3: 10       Set Output Flag High
+
+
+3:  Set Active Storage Area (P80)^14253
+ 1: 1        Final Storage
+ 2: 100      Array ID
+
+
+
+4:  Resolution (P78)
+ 1: 1        High Resolution
+
+
+5:  Average (P71)^23770
+ 1: 1        Reps
+ 2: 2        Loc [ avgfreq   ]
+
+
+
+
+*Table 2 Program
+  02: 0.0000    Execution Interval (seconds)
+
+*Table 3 Subroutines
+
+End Program
+
+-Input Locations-
+1 freq      1 0 1
+2 avgfreq   1 1 0
+3 _________ 0 0 0
+4 _________ 0 0 0
+5 _________ 0 0 0
+6 _________ 0 0 0
+7 _________ 0 0 0
+8 _________ 0 0 0
+9 _________ 0 0 0
+10 _________ 0 0 0
+11 _________ 0 0 0
+12 _________ 0 0 0
+13 _________ 0 0 0
+14 _________ 0 0 0
+15 _________ 0 0 0
+16 _________ 0 0 0
+17 _________ 0 0 0
+18 _________ 0 0 0
+19 _________ 0 0 0
+20 _________ 0 0 0
+21 _________ 0 0 0
+22 _________ 0 0 0
+23 _________ 0 0 0
+24 _________ 0 0 0
+25 _________ 0 0 0
+26 _________ 0 0 0
+27 _________ 0 0 0
+28 _________ 0 0 0
+-Program Security-
+0
+0000
+0000
+-DLD File Labels-
+0
+-Final Storage Labels-
+0,100,14253
+1,avgfreq_AVG~2,23770
