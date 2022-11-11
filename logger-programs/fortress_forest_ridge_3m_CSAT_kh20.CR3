@@ -9,7 +9,9 @@
 ' CSAT SN: 0941-2
 
 'Modified by Lindsey Langs on Jan 8th, 2020 for the snowpack ventilation experiment at Fortress Mountain.
-'Modified by Alex Cebulski Nov 10, 2022 to fix rho_w calculation not sure if we should be doing the analog shift in addition to the eddy pro sensor distance shift. See more details on this program modifications at: https://github.com/acebulsk/eddy-cov/tree/main/logger-programs
+'Modified by Alex Cebulski Nov 10, 2022 to fix rho_w calculation. See more details on modifications of this program in the git log history at: https://github.com/acebulsk/eddy-cov/tree/main/logger-programs
+' Confirmed need to do analog time lag in addition to the eddy pro time lag according to the email below from Dr. James Kathilankal at LICOR : 
+' The time lag adjusted in the program is the time lag which is present between the sonic data and the KH2O data because of the way the data is collected. Delay can also occur because of the direction from which wind blows and what sensor sees the wind first. This delay is taken care by EddyPro by aligning the signals using cross covariance. If there are no delays observed mathematically the signals are not realigned.
 
 'Wiring Details
 
