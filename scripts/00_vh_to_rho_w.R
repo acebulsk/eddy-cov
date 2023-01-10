@@ -5,10 +5,10 @@ library(ggplot2)
 library(dplyr)
 library(logr)
 
+path_hdd <- "/media/alex/alex-phd-data/field-downloads/met-data/hi-freq/"
+
 general_log_note <- 
-"For this run we added the actual calibration parameters from the CS calibration sheet for SN 1528. 
-The 3m ec system has not been checked for the serial number as of yet but Lindsey said safe to assume 
-since the other EC SN 1527 is in the lab."
+"For this run we added the actual calibration parameters from the CS calibration sheet for SN 1528."
 
 # functions
 
@@ -29,7 +29,7 @@ xkw <- x * kw  # Path Length * Water Vapor absorption coefficient (m^3 / g)
 
 # Create temp log file location
 path <- paste0("ec-high-freq-processing_", format(Sys.time(), "%Y_%m_%d_%H%M"), ".log")
-tmp <- file.path('/media/alex/CRHO PHOTOS/fortress/met-data/hi-freq/', path)
+tmp <- file.path(paste0(path_hdd, path))
 
 # Open log
 lf <- log_open(tmp)
@@ -38,8 +38,8 @@ log_print(general_log_note, console = T)
 
 # raw_path <- 'data/hi-freq/raw/subset-15min-ascii/'
 # out_path <- 'data/hi-freq/clean/subset-15min-ascii-calcrho/'
-raw_path <- '/media/alex/CRHO PHOTOS/fortress/met-data/hi-freq/clean-for-pre-processing/'
-out_path <- '/media/alex/CRHO PHOTOS/fortress/met-data/hi-freq/calc-rho-w-for-ep/'
+raw_path <- paste0(path_hdd, 'clean-for-pre-processing/')
+out_path <- paste0(path_hdd, 'calc-rho-w-for-ep/')
 
 l <- list.files(raw_path, full.names = F)
 
@@ -80,15 +80,15 @@ rho_w(df$vh, v_0, xkw)
 
 # check calculated water vapour density against absolute humidity, not sure if this is appropriate comparison as does not match up well for Feb 10, 2022 - maybe instrument error.
 
-met <- readRDS('../../analysis/interception/data/met/met_main_th.rds') |>
-  select(TIMESTAMP = datetime, AirTC_towerTop, RH_towerTop) |>
-  mutate(TIMESTAMP = round(TIMESTAMP, "mins"))
-
-ec <- df |> mutate(TIMESTAMP = round(TIMESTAMP, "mins"))
-
-ec_met <- left_join(ec, met)
-
-ec_met$rho_air <- psychRomet::absolute_humidity(ec_met$AirTC_towerTop, ec_met$RH_towerTop/100) * 1000
+# met <- readRDS('../../analysis/interception/data/met/met_main_th.rds') |>
+#   select(TIMESTAMP = datetime, AirTC_towerTop, RH_towerTop) |>
+#   mutate(TIMESTAMP = round(TIMESTAMP, "mins"))
+# 
+# ec <- df |> mutate(TIMESTAMP = round(TIMESTAMP, "mins"))
+# 
+# ec_met <- left_join(ec, met)
+# 
+# ec_met$rho_air <- psychRomet::absolute_humidity(ec_met$AirTC_towerTop, ec_met$RH_towerTop/100) * 1000
 
 
 calc_rho_w <- function(file_in, file_out) {
@@ -117,6 +117,26 @@ calc_rho_w <- function(file_in, file_out) {
 # file_range <- 2541:8492
 # file_range <- 8493:length(filename_filter)
 # file_range <- 1:10
+
+# check what files have already been processed in the out_path dir so we do not 
+# run redundant processes
+# can also look at the log file but this is more repeatable 
+
+out_files <- list.files(out_path, full.names = F)
+
+tail(out_files,n = 1)
+
+df_check_reduce <- df_check[order(df_check[,'datetime']),]
+df_check_reduce <- df_check_reduce[!duplicated(df_check_reduce$datetime),]
+df_check_reduce <- df_check_reduce[df_check_reduce$datetime>as.POSIXct('2022-10-19 18:30:00', tz = 'GMT-6'),]
+
+full_seq <- wxlogR::datetime_seq_full(df_check_reduce$datetime)
+
+df_full <- data.frame(datetime = full_seq)
+
+df_compare <- dplyr::left_join(df_full, df_check_reduce)
+
+filename_filter <- df_compare$filename[is.na(df_compare$filename) == F]
 
 file_out_list <- paste0('FFR_low_ec_',gsub('.*highfreq_|', "", filename_filter))
 
