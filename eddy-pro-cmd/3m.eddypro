@@ -130,7 +130,7 @@ sa_gas4_g1_start=1
 sa_gas4_g1_stop=12
 
 [RawProcess_General]
-data_path=/media/alex/alex-phd-data/field-downloads/met-data/hi-freq/calc-rho-w-for-ep
+data_path=/media/alex/phd-data/field-downloads/met-data/hi-freq/calc-rho-w-for-ep
 recurse=1
 use_geo_north=0
 mag_dec=0
