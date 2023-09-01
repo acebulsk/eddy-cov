@@ -1,0 +1,745 @@
+'CR1000 Series Datalogger
+
+'Copyright (c) 2002, 2006, 2010 Campbell Scientific, Inc. All rights reserved.
+
+
+'Name:    BWC2017_MainPasture_Flux
+'Version: 7.0
+'Date:    October 11, 2017
+'Author:  Bruce Johnson
+
+'Program for calculating sensible and latent heat fluxes at the Main
+'  Pasture site in the Brightwater Creek research watershed
+'
+'All extraneous instructions for sensors we are not using have been
+'removed from the program
+'All conditional compile statements have been removed
+'
+'Other changes:
+'  - high frequency scan interval set to 20 Hz
+'  - changed number of days to store on card to 56
+'  - updated calibration for new KH2O instrument, using Windows Scaled, Dry range
+'
+'Changes for version 3
+'  - changed number of days to store on card to 35
+'  - added minimum battery voltage to 30min output table
+'  - changed panelT, BattV & Slow Sequence scan totals to FP2 output
+'
+'Changes for version 4
+'  - replaced KH2O with new instrument, s/n 1595
+'  - updated calibration for new KH2O instrument, using Windows Clean, Full range
+'  - calculated H2O mass density (rho_w) using equation:\
+'       rho_w = (LOG(kh_mV)-ln_v0)/xkw
+'  - added H2O mass density (rho_w) to ts_data output table
+'  - changed ts_data output table to create 30 minute files instead of daily files
+'  - changed the naming convention of the ts_data output files to create proper
+'    timestamp for each file (based on last recored in table)
+'
+'Changes for version 5
+'  ** this version never installed on logger **
+'  - using COM4 (C7 and C8) to connect to Met2 logger
+'
+'Changes for version 6
+'  - changed high frequency data table to save lagged data instead of raw data
+'  - moved calculation of water vapour density (rho_w) to lagged data instead of raw data
+'
+'version 6.1
+'  - changed KH2O s/n 1680, updated calibration coefficients
+'
+'version 6.2
+'  - added logger diagnostics output table
+'
+' June 16 / 2017
+'  - changed NUM_DAY_CRD constant to 70 (from 35)
+'  - changed NUM_DAY_CPU constant to 7 (from 1)
+'
+'Changes for version 7
+'  - replaced KH2O with newly calibrated instrument, s/n 1595
+'  - updated calibration coefficients
+
+'Instruments measured:
+'  KH2O      - Krypton hygrometer
+'  CSAT3     - 3-dimensional sonic anemometer
+'  HMP45C212 - Vaisala temperature / relative humidity probe
+
+
+'********** WIRING DIAGRAM *****************************************
+
+'----- CSAT3 wiring ---------------------------------
+'SDM-C1    SDM Data (green)
+'SDM-C2    SDM Clock (white)
+'SDM-C3    SDM Enable (brown)
+'G         SDM reference (black)
+'G         SDM shield (clear)
+'+12V      power (red)
+'G         power reference (black)
+'G         power shield (clear)
+'----------------------------------------------------
+
+'----- KH20 wiring ----------------------------------
+'1H        Signal (white)
+'1L        Signal reference (black)
+'AG        Shield (clear)
+'12V       Power (red)
+'G         Power reference (black)
+'G         Power shield (clear)
+'----------------------------------------------------
+
+'----- HMP45C212 wiring -----------------------------
+'2H      Temperature signal (orange)
+'2L      Relative humidity signal (green)
+'AG      Signal reference (white)
+'5V      Power control (yellow)
+'12V     Power (red)
+'AG      Power reference (purple)
+'AG      Shield (clear)
+'Vx1     Temperature excitation (black)
+'----------------------------------------------------
+
+
+'The sign convention for the fluxes is positive away from the surface and
+'negative towards the surface.
+'
+'Before computing online fluxes, the datalogger will introduce lags into the eddy
+'covariance data to account for the fixed instrument delays. The lags are dependent
+'on the instrument setting and/or the scan interval. Search for "Fixed inherent
+'lag" and set the delay to the appropriate value. The raw data is not lagged.
+'
+'The site attendant must load in several constants and calibration values.  Search
+'for the text string "unique" to find the locations where unique constants and
+'calibration values are entered.
+
+'*** Unit Definitions ***
+'Symbol   Units
+'---------------
+'C        Celsius
+'degrees  degrees (angle)
+'g        grams
+'J        Joules
+'kg       kilograms
+'kPa      kilopascals
+'m        meters
+'mg       milligrams
+'mmol     millimoles
+'mol      moles
+'s        seconds
+'umol     micromols
+'V        volts
+'W        Watts
+
+'*** Station constants ***
+Const SCAN_INTERVAL = 50        'Unique value, measurement rate 100 ms (10 Hz) or 50 ms (20 Hz).
+Const OUTPUT_INTERVAL = 30      'Unique value, online flux data output interval in minutes.
+Const NUM_DAY_CRD = 70          'Unique value, number of days of flux data to store on the CRD.
+Const SDM_PER = 30              'Unique value, default SDM clock speed.
+
+Const SITE_PRESS = 95           'Unique value for site pressure (kPa).
+
+'set SDM address for CSAT3
+Const CSAT3_SDM_ADDR = 3        'Unique SDM address for CSAT3.
+
+
+'calibration information for KH2O s/n 1595
+'-----------------------------------------
+'installed at site october 12, 2017
+'Path (X) = 1.234 cm
+
+'Windows Scaled     XKW       KW        Vo
+'  Full range     -0.190     -0.154     8.208
+'  Dry range      -0.205     -0.166     8.278
+'  Wet range      -0.186     -0.150     8.144
+'
+'Windows Clean      XKW       KW        Vo
+'  Full range     -0.189     -0.153     8.521
+'  Dry range      -0.202     -0.164     8.588
+'  Wet range      -0.185     -0.150     8.456
+
+'set calibration values for KH2O - Windows Clean, Full range
+Const XKW = -0.189              'Unique path length times absorption coefficient for water vapor [m^3/g].
+Const X = 1.234                 'Unique path length of the KH20 [cm].
+Const KW = -0.153               'Unique absorption coefficient for water vapor [m^3/(g cm)].
+Const ln_Vo = 8.521             'Unique calibration constant of the KH2O [ln(mV)]
+
+PipeLineMode
+
+'***************************************************
+'*     DECLARE GENERAL CONSTANTS AND VARIABLES     *
+'***************************************************
+
+Public Lastname As String * 45                           'variables for adding timestamp to ts_data output file
+Public TableFilename As String * 45
+Public rTime(9), HrMin
+Alias rTime(1) = Year
+Alias rTime(2) = Month
+Alias rTime(3) = Date
+Alias rTime(4) = Hour
+Alias rTime(5) = Minute
+
+Public sMonth As String * 2                              'string variables for Month, Day, HrMin
+Public sDate As String * 2
+Public sHrMin As String * 4
+
+Const OFFSET = 17                                        'An offset delay that will be introduced to the eddy covariance data used to compute online fluxes.
+Const SCAN_BUFFER_SIZE = 300*INT (1000/SCAN_INTERVAL)    'Compute a 300 second scan buffer.
+
+Const NUM_DAY_CPU = 7                                              'Number of days of flux data to store on the CPU.
+Const FLUX_SIZE_CPU = Ceiling ((NUM_DAY_CPU*1440)/OUTPUT_INTERVAL) 'Size of flux data table on CPU [days].
+Const FLUX_SIZE_CRD = Ceiling ((NUM_DAY_CRD*1440)/OUTPUT_INTERVAL) 'Size of flux data table on CRD [days].
+
+Const MU_WPL = 29/18                                     'Ratio of the molecular weight of dry air to that of water vapor.
+Const R = 8.3143e-3                                      'Universal gas constant [kPa m^3/(K mol)].
+Const RD = R/29                                          'Gas constant for dry air [kPa m^3/(K g)].
+Const LV = 2440                                          'Estimate of the latent heat of vaporization [J/g].
+Const RV = R/18                                          'Gas constant for water vapor [kPa m^3/(K g)].
+
+Dim dly_data_out(7)                                      'Array used to temporarily store the lagged record.
+
+'Other measurements.
+Public panel_tmpr
+Public batt_volt
+Units panel_tmpr = C
+Units batt_volt = V
+
+'Program working variables.
+Dim scan_count As Long                           'Number scans executed.
+Dim slowsequence_finished_f As Boolean           'Flag used to indicate the SlowSequence has finished its scan.
+Dim slowsequence_disable_f As Boolean = TRUE     'Flag used to decimate statistics in main scan.
+Dim sys_conf_var_file As Long                    'Filehandle for the file that contains the system configuration variables in the CPU.
+Dim i As Long                                    'Main scan index variable.
+Dim ii As Long                                   'Slow sequence scan index variable.
+Dim n = 1
+Units n = samples
+
+
+'*** Beginning of CSAT3 constants, variables, and working data table ***
+'--------------------------------------------------------------------------
+Const CSAT_OPT = INT (1000/SCAN_INTERVAL)  'Compute CSAT3 Execution Parameter.
+Const DELAY_CSAT3 = 2                      'Fixed CSAT3 delay.
+Const CSAT3_REC_BCK = OFFSET-DELAY_CSAT3   'Number of records back to align CSAT3 data.
+
+Const CP = 1004.67                         'Estimate of heat capacity of air [J/(kg K)].
+
+'User must enter sonic azimuth using keyboard after program has compiled 
+'(azimuth of the CSAT3(A) negative x-axis see Section 3.2.1 CSAT3A Azimuth in the OPEC manual).'
+Public sonic_azimuth 
+Units sonic_azimuth = degrees
+
+Public sonic(5)
+Alias sonic(1) = Ux
+Alias sonic(2) = Uy
+Alias sonic(3) = Uz
+Alias sonic(4) = Ts
+Alias sonic(5) = diag_sonic
+Units Ux = m/s
+Units Uy = m/s
+Units Uz = m/s
+Units Ts = C
+Units diag_sonic = arb
+
+Dim diag_bits_sonic(4) As Boolean          'Sonic warning flags.
+Alias diag_bits_sonic(1) = sonic_amp_l_f   'Amplitude low warning flag.
+Alias diag_bits_sonic(2) = sonic_amp_h_f   'Amplitude high warning flag.
+Alias diag_bits_sonic(3) = sonic_sig_lck_f 'Poor signal lock warning flag.
+Alias diag_bits_sonic(4) = sonic_del_T_f   'Delta temperature warning flag.
+Units diag_bits_sonic = arb
+
+Dim sonic_irga_raw(12)                     'CSAT3 and EC150 (not lagged).
+
+Dim diag_sonic_tmp As Long                 'Temporary variable used to break out the CSAT3(A) diagnostic bits.
+Dim mask_sonic As Long
+Dim sonic_disable_f As Boolean             'TRUE when CSAT3(A) diagnostic warning flags are on or CSAT3(A) has not sent data or an SDM signature error is reported.
+Dim Ts_absolute                            'Sonic temperature (K).
+Dim sonic_azimuth_prev
+
+Dim cov_array_sonic(1,4)                   'Arrays used to hold the input data for the covariance instructions (CSAT3(A)).
+Dim cov_out_sonic(18)                      'CSAT3(A) statistics.
+Alias cov_out_sonic(1) = Hs                'Sensible heat flux using sonic temperature.
+Alias cov_out_sonic(2) = tau               'Momentum flux.
+Alias cov_out_sonic(3) = u_star            'Friction velocity.
+Alias cov_out_sonic(4) = Ts_stdev
+Alias cov_out_sonic(5) = Ts_Ux_cov
+Alias cov_out_sonic(6) = Ts_Uy_cov
+Alias cov_out_sonic(7) = Ts_Uz_cov
+Alias cov_out_sonic(8) = Ux_stdev
+Alias cov_out_sonic(9) = Ux_Uy_cov
+Alias cov_out_sonic(10) = Ux_Uz_cov
+Alias cov_out_sonic(11) = Uy_stdev
+Alias cov_out_sonic(12) = Uy_Uz_cov
+Alias cov_out_sonic(13) = Uz_stdev
+Alias cov_out_sonic(14) = wnd_spd
+Alias cov_out_sonic(15) = rslt_wnd_spd
+Alias cov_out_sonic(16) = wnd_dir_sonic
+Alias cov_out_sonic(17) = std_wnd_dir
+Alias cov_out_sonic(18) = wnd_dir_compass
+Units Hs = W/m^2
+Units tau = kg/(m s^2)
+Units u_star = m/s
+Units Ts_stdev = C
+Units Ts_Ux_cov = C m/s
+Units Ts_Uy_cov = C m/s
+Units Ts_Uz_cov = C m/s
+Units Ux_stdev = m/s
+Units Ux_Uy_cov = (m/s)^2
+Units Ux_Uz_cov = (m/s)^2
+Units Uy_stdev = m/s
+Units Uy_Uz_cov = (m/s)^2
+Units Uz_stdev = m/s
+Units wnd_spd = m/s
+Units rslt_wnd_spd = m/s
+Units wnd_dir_sonic = degrees
+Units std_wnd_dir = degrees
+Units wnd_dir_compass = degrees
+
+DataTable (delay_3d,TRUE,OFFSET)
+  TableHide
+  Sample (5,sonic_irga_raw(1),IEEE4)
+EndTable
+
+DataTable (comp_cov_3d,TRUE,1)
+  TableHide
+  DataInterval (0,OUTPUT_INTERVAL,Min,1)
+  'Compute covariances from CSAT3(A) data.
+  Covariance (4,cov_array_sonic(1,1),IEEE4,sonic_disable_f,10)
+  WindVector (1,Uy,Ux,IEEE4,sonic_disable_f,0,1,2)
+EndTable
+    
+DisplayMenu ("System Control",TRUE)
+MenuItem ("Sonic Azmth",sonic_azimuth)
+EndMenu
+'*** End of CSAT3(A) constants, variables, and working data table ***
+'====================================================================
+
+
+'*** Beginning of KH20 constants, variables, and working data table. ***
+'-----------------------------------------------------------------------
+Const CO = 0.2095                     'Fraction concentration of oxygen in the atmosphere.
+Const MO = 32                         'Molecular weight of oxygen [g/mol].
+Const KO = 0.0045                     'Absorption coefficient for oxygen [m^3/(g cm)].
+
+Public kh20(2), rho_w
+Alias kh20(1) = kh
+Alias kh20(2) = ln_kh
+Units kh = mV
+Units ln_kh = ln_mV
+Units rho_w = g/m3
+
+Dim sigma_wpl_kh                      'Webb et al. sigma = density of water vapor / density of dry air.
+
+'Raw and not lagged KH20 data.
+Dim kh_raw(2)
+
+Dim cov_array_kh(5)                   'Arrays used to hold the input data for the covariance instructions (sonic and KH20).
+Dim cov_out_kh(11)                    'KH20 statistics.
+Alias cov_out_kh(1) = LE_kh_wpl       'Latent heat flux (KH20), with Webb et al. term.
+Alias cov_out_kh(2) = H2O_kh_stdev
+Alias cov_out_kh(3) = H2O_kh_Ux_cov
+Alias cov_out_kh(4) = H2O_kh_Uy_cov
+Alias cov_out_kh(5) = H2O_kh_Uz_cov
+Alias cov_out_kh(6) = H2O_kh_Ts_cov
+Alias cov_out_kh(7) = LE_kh           'Latent heat flux from KH20.
+Alias cov_out_kh(8) = oc_LE           'Oxygen correction to the KH20 Latent heat flux.
+Alias cov_out_kh(9) = oc_var          'Oxygen correction to the KH20 variance.
+Alias cov_out_kh(10) = H2O_wpl_LE_kh  'Latent heat flux (KH20), Webb et al. term due to latent heat flux.
+Alias cov_out_kh(11) = H2O_wpl_H_kh   'Latent heat flux (KH20), Webb et al. term due to sensible heat flux.
+Units LE_kh_wpl = W/m^2
+Units H2O_kh_stdev = g/m^3
+Units H2O_kh_Ux_cov = g/(m^2 s)
+Units H2O_kh_Uy_cov = g/(m^2 s)
+Units H2O_kh_Uz_cov = g/(m^2 s)
+Units H2O_kh_Ts_cov = g C/m^3
+Units LE_kh = W/m^2
+Units oc_LE = W/m^2
+Units oc_var = (g/m^3)^2
+Units H2O_wpl_LE_kh = W/m^2
+Units H2O_wpl_H_kh = W/m^2
+
+DataTable (delay_kh,TRUE,OFFSET)
+  TableHide
+  Sample (2,kh_raw(1),IEEE4)
+EndTable
+
+DataTable (comp_cov_kh,TRUE,1)
+  TableHide
+  DataInterval (0,OUTPUT_INTERVAL,Min,1)
+  'Compute covariance of KH20 against sonic wind data.
+  Covariance (5,cov_array_kh(1),IEEE4,sonic_disable_f OR (kh <= 0),5)
+EndTable
+'*** End of KH20 constants, variables, and working data table ***
+'================================================================
+
+
+'*** Beginning of temperature/humidity probe constants, variables, and working data table. ***
+'---------------------------------------------------------------------------------------------
+Public tmpr_rh(3)
+Alias tmpr_rh(1) = T_tmpr_rh                    'Temperature/humidity probe temperature.
+Alias tmpr_rh(2) = RH_tmpr_rh                   'Temperature/humidity probe relative humidity.
+Alias tmpr_rh(3) = e_tmpr_rh                    'Temperature/humidity probe vapor pressure.
+Units T_tmpr_rh = C
+Units RH_tmpr_rh = percent
+Units e_tmpr_rh = kPa
+
+Dim e_sat_tmpr_rh                               'Temperature/humidity probe saturation vapor pressure.
+Dim rho_d_tmpr_rh_mean                          'Density of dry air used in Webb et al. term [kg / m^3].
+
+Dim stats_out_tmpr_rh(6)                        'Temperature/humidity probe statistics.
+Alias stats_out_tmpr_rh(1) = T_tmpr_rh_mean     'Mean temperature/humidity probe temperature.
+Alias stats_out_tmpr_rh(2) = e_tmpr_rh_mean     'Mean temperature/humidity probe vapor pressure.
+Alias stats_out_tmpr_rh(3) = e_sat_tmpr_rh_mean 'Mean temperature/humidity probe saturation vapor pressure.
+Alias stats_out_tmpr_rh(4) = H2O_tmpr_rh_mean   'Mean temperature/humidity probe vapor density.
+Alias stats_out_tmpr_rh(5) = RH_tmpr_rh_mean    'Mean temperature/humidity probe relative humidity.
+Alias stats_out_tmpr_rh(6) = rho_a_tmpr_rh_mean 'Mean air density using Temperature/humidity probe measurements.
+Units T_tmpr_rh_mean = C
+Units e_tmpr_rh_mean = kPa
+Units e_sat_tmpr_rh_mean = kPa
+Units H2O_tmpr_rh_mean = g/m^3
+Units RH_tmpr_rh_mean = %
+Units rho_a_tmpr_rh_mean = kg/m^3
+
+DataTable (stats_tmpr_rh,TRUE,1)
+  TableHide
+  DataInterval (0,OUTPUT_INTERVAL,Min,1)
+  Average (1,T_tmpr_rh,IEEE4,slowsequence_disable_f)
+  Average (1,e_tmpr_rh,IEEE4,slowsequence_disable_f)
+  Average (1,e_sat_tmpr_rh,IEEE4,slowsequence_disable_f)
+EndTable
+'*** End of temperature and humidity probe constants, variables, and working data table ***
+'==========================================================================================
+
+
+'************************************
+'*    CREATE OUTPUT DATA TABLES     *
+'************************************
+
+' Flux Data Table
+'----------------
+DataTable (flux,TRUE,FLUX_SIZE_CPU)
+  DataInterval (0,OUTPUT_INTERVAL,Min,10)
+  CardOut (0,FLUX_SIZE_CRD)
+  
+ '***** CSAT3 output data ******************
+  Sample (18,Hs,IEEE4)
+  Average (4,Ux,IEEE4,sonic_disable_f)
+  Sample (1,sonic_azimuth,IEEE4)
+  Totalize (1,n,IEEE4,sonic_disable_f)
+  FieldNames ("sonic_samples_Tot")
+  Totalize (1,n,IEEE4,(diag_sonic<>NAN) OR (diag_sonic<>61503))
+  FieldNames ("no_new_sonic_data_Tot")
+  Totalize (1,n,IEEE4,diag_sonic<>61441)
+  FieldNames ("sig_error_Tot")
+  Totalize (1,n,IEEE4,sonic_amp_l_f IMP (diag_sonic=NAN))
+  FieldNames ("sonic_amp_l_f_Tot")
+  Totalize (1,n,IEEE4,sonic_amp_h_f IMP (diag_sonic=NAN))
+  FieldNames ("sonic_amp_h_f_Tot")
+  Totalize (1,n,IEEE4,sonic_sig_lck_f IMP (diag_sonic=NAN))
+  FieldNames ("sonic_sonic_sig_lck_f_Tot")
+  Totalize (1,n,IEEE4,sonic_del_T_f IMP (diag_sonic=NAN))
+  FieldNames ("sonic_del_T_f_Tot")
+  
+  '***** KH20 output data ******************
+  Sample (11,LE_kh_wpl,IEEE4)
+  Average (2,kh,IEEE4,kh<=0)
+  Totalize (1,n,IEEE4,sonic_disable_f OR (kh<=0))
+  FieldNames ("kh_samples_Tot")
+  Totalize (1,n,IEEE4,kh>0)
+  FieldNames ("kh_no_signal_Tot")
+    
+ '***** HMP probe output data **************
+  Sample (6,T_tmpr_rh_mean,IEEE4)
+
+  '***** other output data *****************
+  Average (1,panel_tmpr,FP2,FALSE)
+  Average (1,batt_volt,FP2,slowsequence_disable_f)
+  Minimum (1,batt_volt,FP2,slowsequence_disable_f,False)
+  Totalize (1,n,FP2,slowsequence_disable_f)
+  FieldNames ("slowsequence_Tot")
+EndTable
+
+
+' Diagnostic Data Table
+'----------------------
+DataTable (diagnostic,TRUE,1)
+  Sample (4,sonic_amp_l_f,Boolean)
+EndTable
+
+
+' Time Series Data Table
+'-----------------------
+DataTable (ts_data,TRUE,-1)
+  DataInterval (0,SCAN_INTERVAL,mSec,100)
+  TableFile ("CRD:Rawfilename",64,-1,0,30,Min,0,Lastname)
+
+  '*** CSAT3 time series output ************
+  Sample (5,sonic(1),IEEE4)
+  FieldNames ("Ux,Uy,Uz,Ts,diag_sonic")
+  
+ '*** KH20 time series output **************
+  Sample (2,kh20(1),IEEE4)
+  FieldNames ("kh,ln_kh")
+  Sample (1,rho_w,IEEE4)
+  FieldNames ("H2O_mass_density")
+  Sample (1,T_tmpr_rh,IEEE4)
+  Sample (1,e_tmpr_rh,IEEE4)
+EndTable
+
+' Logger Diagnsotics Data Table
+'------------------------------
+DataTable(LoggerDiag,True,365)
+  DataInterval(0,1440,Min,10)
+  CardOut (0,NUM_DAY_CRD)
+  Minimum (1,batt_volt,FP2,0,False)
+  Maximum (1,batt_volt,FP2,False,False)
+  Average (1,batt_volt,FP2,False)
+  Minimum (1,panel_tmpr,FP2,0,False)
+  Maximum (1,panel_tmpr,FP2,False,False)
+  Average (1,panel_tmpr,FP2,False)
+  Sample (1,status.OSversion,String)
+  Sample (1,status.ProgName,String)
+  Sample (1,status.LithiumBattery,FP2)
+  Sample (1,status.PakBusAddress,UINT2)
+  Sample (1,status.Low12VCount,UINT2)
+  Sample (1,status.Low5VCount,UINT2)
+  Sample (1,status.CompileResults,String)
+  Sample (1,status.ProgSignature,UINT4)
+  Sample (1,status.StartTime,String)
+  Sample (1,status.SkippedScan,UINT2)
+  Sample (1,status.SkippedSystemScan,UINT2)
+  Sample (1,status.VarOutOfBound,UINT2)
+  Sample (1,status.WatchdogErrors,UINT2)
+EndTable
+
+'======================================================================================
+'======================================================================================
+
+'*** Program ***
+
+BeginProg
+  sys_conf_var_file = FileOpen ("CPU:sys_conf_var.dat","rb",0) 'Check if a file exists.
+  FileClose (sys_conf_var_file)
+
+  If ( sys_conf_var_file = 0 ) Then
+    Calfile (sonic_azimuth,1,"CPU:sys_conf_var.dat",0) 'Store the default values to the file.
+  EndIf
+  Calfile (sonic_azimuth,1,"CPU:sys_conf_var.dat",1) 'Read the values from the file.
+  sonic_azimuth_prev = sonic_azimuth
+
+  'Set the SDM clock speed.
+  SDMSpeed (SDM_PER)
+  
+  Scan (SCAN_INTERVAL,mSec,SCAN_BUFFER_SIZE,0)
+      
+    '----- Beginning of CSAT3 measurements ------
+    'Measure datalogger panel temperature.
+    PanelTemp (panel_tmpr,250)
+    'Get CSAT3 data.
+    CSAT3 (sonic_irga_raw(1),1,CSAT3_SDM_ADDR,91,CSAT_OPT)
+
+    CallTable delay_3d
+    '--------------------------------------------
+    
+    '----- Beginning of KH20 measurements -------
+    VoltDiff (kh_raw(1),1,mV5000,1,TRUE,0,250,1,0)
+    kh_raw(2) = LOG (kh_raw(1))
+    rho_w = (kh_raw(2)- ln_Vo)/XKW
+
+    CallTable delay_kh
+    '--------------------------------
+    
+    'Save time series data.
+    CallTable ts_data
+
+    'Routine to create file name for 30 minute ts_data table
+    If Lastname <> 0 Then
+      RealTime (rTime())
+      HrMin = (Hour * 100) + Minute   'calculate HrMin variable
+      
+      If Month < 10 Then              'change month to string
+        sMonth = "0" & Month
+        Else
+          sMonth = Month
+      EndIf
+      
+      If Date < 10 Then               'change date to string
+        sDate = "0" & Date
+        Else
+          sDate = Date
+      EndIf
+      
+      If HrMin < 10 Then               'change hour/minute to string
+        sHrMin = "000" & HrMin
+        Else
+          If HrMin >= 10 AND HrMin <60 Then
+            sHrMin = "00" & HrMin
+            Else
+              If HrMin >= 60 AND HrMin < 959 Then
+                sHrMin = "0" & HrMin
+                Else
+                  sHrMin = HrMin
+             EndIf
+          EndIf
+      EndIf
+      
+      TableFilename = "CRD:BWC_MainFlux_ts_data_" + Year + "-" + sMonth + "-" + sDate + "-" + sHrMin + ".dat"
+      FileRename (Lastname, TableFilename)
+      Lastname = 0
+    EndIf
+
+    If ( scan_count >= OFFSET ) Then
+      
+      '----- Beginning of CSAT3 processing -----
+      'Load in CSAT3 data that has been lagged by CSAT3_REC_BCK scans.
+      GetRecord (dly_data_out(1),delay_3d,CSAT3_REC_BCK)
+
+      Move (Ux,5,dly_data_out(1),5) 'move Ux, Uy, Uz, Ts & diag_sonic
+
+      'Extract the four warning flags from the sonic diagnostic word.
+      diag_sonic_tmp = IIF (diag_sonic <> NAN,diag_sonic,&hf000)
+      mask_sonic = &h1000
+      For i = 1 To 4
+        diag_bits_sonic(i) = diag_sonic_tmp AND mask_sonic
+        mask_sonic = mask_sonic*2
+      Next i
+
+      'Turn on the intermediate processing disable flag when any CSAT3
+      'warning flag is high.
+      sonic_disable_f = diag_sonic_tmp AND &hf000
+
+      Ts_absolute = Ts+273.15
+
+      'Load the arrays that hold the input data for the covariance instructions.
+      cov_array_sonic(1,1) = Ts
+      Move (cov_array_sonic(1,2),3,Ux,3)
+      CallTable comp_cov_3d
+      If ( comp_cov_3d.Output(1,1) ) Then
+        GetRecord (Ts_stdev,comp_cov_3d,1)
+
+        'Rotate the CSAT3 RHC system so the negative x-axis points north.
+        wnd_dir_compass = (360+sonic_azimuth-wnd_dir_sonic) MOD 360
+
+        'Make the CSAT3 wind direction fall between 0 to 180 degrees and 0 to -180 degrees.
+        If ( wnd_dir_sonic > 180 ) Then ( wnd_dir_sonic = wnd_dir_sonic-360 )
+
+        'Compute online fluxes.
+        tau = SQR ((Ux_Uz_cov*Ux_Uz_cov)+(Uy_Uz_cov*Uy_Uz_cov))
+        u_star = SQR (tau)
+
+        'Compute the standard deviation from the variance.
+        Ts_stdev = SQR (Ts_stdev)
+        Ux_stdev = SQR (Ux_stdev)
+        Uy_stdev = SQR (Uy_stdev)
+        Uz_stdev = SQR (Uz_stdev)
+      EndIf
+      '----- End of CSAT3 processing -----
+      
+
+      '----- Beginning of temperature and humidity processing -----
+      CallTable stats_tmpr_rh
+      If ( stats_tmpr_rh.Output(1,1) ) Then
+        GetRecord (T_tmpr_rh_mean,stats_tmpr_rh,1)
+
+        H2O_tmpr_rh_mean = e_tmpr_rh_mean/((T_tmpr_rh_mean+273.15)*RV)
+        rho_d_tmpr_rh_mean = (SITE_PRESS-e_tmpr_rh_mean)/((T_tmpr_rh_mean+273.15)*RD)
+        rho_a_tmpr_rh_mean = (rho_d_tmpr_rh_mean+H2O_tmpr_rh_mean)/1000
+        RH_tmpr_rh_mean = 100*e_tmpr_rh_mean/e_sat_tmpr_rh_mean
+      EndIf
+      '----- End of temperature and humidity probe processing -----      
+
+
+      '----- Beginning of KH20 processing -----
+      'Load in the KH20 data that has been lagged by OFFSET scans.
+      GetRecord (dly_data_out(1),delay_kh,OFFSET)
+      Move (kh,2,dly_data_out(1),2) 'move Kh & ln_Kh 
+      rho_w = (ln_kh - ln_Vo)/XKW
+
+      'Load the arrays that hold the input data for the covariance instructions.
+      cov_array_kh(1) = ln_kh
+      Move (cov_array_kh(2),3,Ux,3)
+      cov_array_kh(5) = Ts
+      CallTable comp_cov_kh
+      
+      If ( comp_cov_kh.Output(1,1) ) Then
+        GetRecord (H2O_kh_stdev,comp_cov_kh,1)
+
+        H2O_tmpr_rh_mean = e_tmpr_rh_mean/((T_tmpr_rh_mean+273.15)*RV)
+        rho_d_tmpr_rh_mean = (SITE_PRESS-e_tmpr_rh_mean)/((T_tmpr_rh_mean+273.15)*RD)     
+
+        rho_a_tmpr_rh_mean = (rho_d_tmpr_rh_mean+H2O_tmpr_rh_mean)/1000
+        RH_tmpr_rh_mean = 100*e_tmpr_rh_mean/e_sat_tmpr_rh_mean
+
+        'Scale the KH20 cross products.
+        H2O_kh_Ux_cov = H2O_kh_Ux_cov/XKW
+        H2O_kh_Uy_cov = H2O_kh_Uy_cov/XKW
+        H2O_kh_Uz_cov = H2O_kh_Uz_cov/XKW
+        H2O_kh_Ts_cov = H2O_kh_Ts_cov/XKW
+        H2O_kh_stdev = H2O_kh_stdev/(XKW*XKW)
+
+        'Compute online fluxes.
+        LE_kh = LV*H2O_kh_Uz_cov
+
+        'Compute the KH20 oxygen correction for latent heat flux and water
+        ' vapor density variance
+        oc_LE = LV*KO*CO*MO*SITE_PRESS/(KW*R*(T_tmpr_rh_mean+273.15)*(T_tmpr_rh_mean+273.15))*Ts_Uz_cov
+        oc_var = -2*KO*CO*MO*SITE_PRESS/(X*KW*KW*R*(T_tmpr_rh_mean+273.15)*(T_tmpr_rh_mean+273.15))*H2O_kh_Ts_cov
+        
+        'Compute the standard deviation from the variance.
+        H2O_kh_stdev = SQR (H2O_kh_stdev+oc_var)
+
+        sigma_wpl_kh = H2O_tmpr_rh_mean/rho_d_tmpr_rh_mean
+
+        'KH20 Webb et al. term for water vapor Eq. (25).
+        H2O_wpl_LE_kh = MU_WPL*sigma_wpl_kh*(LE_kh-oc_LE)
+        H2O_wpl_H_kh = (1+(MU_WPL*sigma_wpl_kh))*H2O_tmpr_rh_mean/(T_tmpr_rh_mean+273.15)*LV*Ts_Uz_cov
+
+        LE_kh_wpl = LE_kh-oc_LE+H2O_wpl_LE_kh+H2O_wpl_H_kh
+      EndIf
+      '----- End of KH20 processing -----
+
+
+      '*** Beginning of sonic sensible heat, momentum, and sensible heat flux processing ***
+      If ( comp_cov_3d.Output(1,1) ) Then
+           
+        'CSAT3 sensible heat flux using sonic temperature.
+        Hs = rho_a_tmpr_rh_mean*CP*Ts_Uz_cov     'Air density computed from temperature and humidity probe.
+        'CSAT3 momentum flux.
+        tau = rho_a_tmpr_rh_mean*tau             'Air density computed from temperature and humidity probe.
+       
+      EndIf
+      '*** End of sensible heat flux processing ***
+
+
+      CallTable flux
+      CallTable LoggerDiag
+
+
+      slowsequence_disable_f = TRUE
+      If ( slowsequence_finished_f ) Then
+        slowsequence_finished_f = FALSE
+        slowsequence_disable_f = FALSE
+      EndIf
+    Else
+      scan_count += 1
+    EndIf
+    CallTable diagnostic
+  NextScan
+
+
+SlowSequence
+
+  Scan (5,Sec,3,0)
+    'Measure battery voltage.
+    Battery (batt_volt)
+    
+    'measure HMP45C212 probe
+    BrHalf (T_tmpr_rh,1,mV2500,3,1,1,2500,True ,0,_60Hz,178.85,-72.789)
+    VoltSe (RH_tmpr_rh,1,mV2500,4,1,0,_60Hz,0.1,0) 
+    VaporPressure (e_tmpr_rh,T_tmpr_rh,RH_tmpr_rh)
+    SatVP (e_sat_tmpr_rh,T_tmpr_rh)
+
+    'Update file if sonic azimuth has changed.
+    If ( sonic_azimuth_prev <> sonic_azimuth ) Then
+      sonic_azimuth_prev = sonic_azimuth
+      Calfile (sonic_azimuth,1,"CPU:sys_conf_var.dat",0)  'Store the new value to the file.
+    EndIf
+
+    slowsequence_finished_f = TRUE
+  NextScan
+EndProg
