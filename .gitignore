@@ -4,3 +4,6 @@
 .Ruserdata
 data
 figs/*
+tmp/*
+todo.md
+logs/*
