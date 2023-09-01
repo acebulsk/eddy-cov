@@ -117,7 +117,7 @@ Const CSAT_DELAY = 4 '(4 scan delay (2(1 scan delay)) - delay for CSAT to match 
 ## Hydrometer Specs
 
 Model: KH20
-Serial: SN1527 *need to confirm*
+Serial: SN1528 
 Const XKW_high = -0.181 'sensor specific S/N 1527, scaled, dry vapour range
 Const Cp_high = 1005 'approximate heat capacity of air
 Const LV_high = 2835 'approx. latent heat of sublimation at 0C

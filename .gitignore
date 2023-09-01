@@ -7,3 +7,4 @@ figs/*
 tmp/*
 todo.md
 logs/*
+*.html

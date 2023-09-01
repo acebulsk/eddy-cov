@@ -427,26 +427,26 @@ taking the intstrument height average:</p>
     storm = 
       case_when(
         between(TIMESTAMP, 
-                as.POSIXct(&#39;2021-12-23 00:00:00&#39;, tz = &#39;GMT-6&#39;), 
-                as.POSIXct(&#39;2021-12-27 00:00:00&#39;, tz = &#39;GMT-6&#39;)) ~ &#39;dec23-dec27&#39;,
+                as.POSIXct(&#39;2021-12-23 00:00:00&#39;, tz = &#39;Etc/GMT+6&#39;), 
+                as.POSIXct(&#39;2021-12-27 00:00:00&#39;, tz = &#39;Etc/GMT+6&#39;)) ~ &#39;dec23-dec27&#39;,
         # tree emptied by wind on jan 2 am. unloading starts pm jan 5, looks like pluvio was snow capped
         # between(TIMESTAMP, 
-        #         as.POSIXct(&#39;2022-01-02 05:00:00&#39;, tz = &#39;GMT-6&#39;), 
-        #         as.POSIXct(&#39;2022-01-05 07:00:00&#39;, tz = &#39;GMT-6&#39;)) ~ &#39;jan2-jan5&#39;,
+        #         as.POSIXct(&#39;2022-01-02 05:00:00&#39;, tz = &#39;Etc/GMT+6&#39;), 
+        #         as.POSIXct(&#39;2022-01-05 07:00:00&#39;, tz = &#39;Etc/GMT+6&#39;)) ~ &#39;jan2-jan5&#39;,
         between(TIMESTAMP, 
-                as.POSIXct(&#39;2022-01-17 10:00:00&#39;, tz = &#39;GMT-6&#39;), 
-                as.POSIXct(&#39;2022-01-18 10:00:00&#39;, tz = &#39;GMT-6&#39;)) ~ &#39;jan17-jan18&#39;,
+                as.POSIXct(&#39;2022-01-17 10:00:00&#39;, tz = &#39;Etc/GMT+6&#39;), 
+                as.POSIXct(&#39;2022-01-18 10:00:00&#39;, tz = &#39;Etc/GMT+6&#39;)) ~ &#39;jan17-jan18&#39;,
         between(TIMESTAMP, 
-                as.POSIXct(&#39;2022-02-19 10:00:00&#39;, tz = &#39;GMT-6&#39;), 
-                as.POSIXct(&#39;2022-02-20 10:00:00&#39;, tz = &#39;GMT-6&#39;)) ~ &#39;feb19-feb20&#39;,
+                as.POSIXct(&#39;2022-02-19 10:00:00&#39;, tz = &#39;Etc/GMT+6&#39;), 
+                as.POSIXct(&#39;2022-02-20 10:00:00&#39;, tz = &#39;Etc/GMT+6&#39;)) ~ &#39;feb19-feb20&#39;,
         # smaller storm with what appears to be sublimation starting at 10 am mar 24
         between(TIMESTAMP, 
-                as.POSIXct(&#39;2022-03-24 00:00:00&#39;, tz = &#39;GMT-6&#39;), 
-                as.POSIXct(&#39;2022-03-24 09:45:00&#39;, tz = &#39;GMT-6&#39;)) ~ &#39;mar24&#39;,
+                as.POSIXct(&#39;2022-03-24 00:00:00&#39;, tz = &#39;Etc/GMT+6&#39;), 
+                as.POSIXct(&#39;2022-03-24 09:45:00&#39;, tz = &#39;Etc/GMT+6&#39;)) ~ &#39;mar24&#39;,
         # wind speed picks up at 6 pm on the 4th 
         between(TIMESTAMP, 
-                as.POSIXct(&#39;2022-04-04 00:00:00&#39;, tz = &#39;GMT-6&#39;), 
-                as.POSIXct(&#39;2022-04-04 18:00:00&#39;, tz = &#39;GMT-6&#39;)) ~ &#39;apr4&#39;
+                as.POSIXct(&#39;2022-04-04 00:00:00&#39;, tz = &#39;Etc/GMT+6&#39;), 
+                as.POSIXct(&#39;2022-04-04 18:00:00&#39;, tz = &#39;Etc/GMT+6&#39;)) ~ &#39;apr4&#39;
       )
   ) |&gt; 
   filter(is.na(storm) == F)
@@ -502,26 +502,26 @@ hi_wind &lt;- cbind(hi_wind, d_0[,2:3])</code></pre>
     storm = 
       case_when(
         between(TIMESTAMP, 
-                as.POSIXct(&#39;2021-12-23 00:00:00&#39;, tz = &#39;GMT-6&#39;), 
-                as.POSIXct(&#39;2021-12-27 00:00:00&#39;, tz = &#39;GMT-6&#39;)) ~ &#39;dec23-dec27&#39;,
+                as.POSIXct(&#39;2021-12-23 00:00:00&#39;, tz = &#39;Etc/GMT+6&#39;), 
+                as.POSIXct(&#39;2021-12-27 00:00:00&#39;, tz = &#39;Etc/GMT+6&#39;)) ~ &#39;dec23-dec27&#39;,
         # tree emptied by wind on jan 2 am. unloading starts pm jan 5, looks like pluvio was snow capped
         # between(TIMESTAMP, 
-        #         as.POSIXct(&#39;2022-01-02 05:00:00&#39;, tz = &#39;GMT-6&#39;), 
-        #         as.POSIXct(&#39;2022-01-05 07:00:00&#39;, tz = &#39;GMT-6&#39;)) ~ &#39;jan2-jan5&#39;,
+        #         as.POSIXct(&#39;2022-01-02 05:00:00&#39;, tz = &#39;Etc/GMT+6&#39;), 
+        #         as.POSIXct(&#39;2022-01-05 07:00:00&#39;, tz = &#39;Etc/GMT+6&#39;)) ~ &#39;jan2-jan5&#39;,
         between(TIMESTAMP, 
-                as.POSIXct(&#39;2022-01-17 10:00:00&#39;, tz = &#39;GMT-6&#39;), 
-                as.POSIXct(&#39;2022-01-18 10:00:00&#39;, tz = &#39;GMT-6&#39;)) ~ &#39;jan17-jan18&#39;,
+                as.POSIXct(&#39;2022-01-17 10:00:00&#39;, tz = &#39;Etc/GMT+6&#39;), 
+                as.POSIXct(&#39;2022-01-18 10:00:00&#39;, tz = &#39;Etc/GMT+6&#39;)) ~ &#39;jan17-jan18&#39;,
         between(TIMESTAMP, 
-                as.POSIXct(&#39;2022-02-19 10:00:00&#39;, tz = &#39;GMT-6&#39;), 
-                as.POSIXct(&#39;2022-02-20 10:00:00&#39;, tz = &#39;GMT-6&#39;)) ~ &#39;feb19-feb20&#39;,
+                as.POSIXct(&#39;2022-02-19 10:00:00&#39;, tz = &#39;Etc/GMT+6&#39;), 
+                as.POSIXct(&#39;2022-02-20 10:00:00&#39;, tz = &#39;Etc/GMT+6&#39;)) ~ &#39;feb19-feb20&#39;,
         # smaller storm with what appears to be sublimation starting at 10 am mar 24
         between(TIMESTAMP, 
-                as.POSIXct(&#39;2022-03-24 00:00:00&#39;, tz = &#39;GMT-6&#39;), 
-                as.POSIXct(&#39;2022-03-24 09:45:00&#39;, tz = &#39;GMT-6&#39;)) ~ &#39;mar24&#39;,
+                as.POSIXct(&#39;2022-03-24 00:00:00&#39;, tz = &#39;Etc/GMT+6&#39;), 
+                as.POSIXct(&#39;2022-03-24 09:45:00&#39;, tz = &#39;Etc/GMT+6&#39;)) ~ &#39;mar24&#39;,
         # wind speed picks up at 6 pm on the 4th 
         between(TIMESTAMP, 
-                as.POSIXct(&#39;2022-04-04 00:00:00&#39;, tz = &#39;GMT-6&#39;), 
-                as.POSIXct(&#39;2022-04-04 18:00:00&#39;, tz = &#39;GMT-6&#39;)) ~ &#39;apr4&#39;
+                as.POSIXct(&#39;2022-04-04 00:00:00&#39;, tz = &#39;Etc/GMT+6&#39;), 
+                as.POSIXct(&#39;2022-04-04 18:00:00&#39;, tz = &#39;Etc/GMT+6&#39;)) ~ &#39;apr4&#39;
       )
   ) |&gt; 
   filter(is.na(storm) == F)

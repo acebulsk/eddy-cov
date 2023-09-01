@@ -20,25 +20,25 @@ precip_th_hi <- 1 # min threshold to flag as precip in mm
 
 # bring in raw data from eddy pro
 
-ec_raw_compute <- read.csv('data/eddy_pro_output/eddypro_1_full_output_2022-11-04T201154_exp.csv', skip = 1)
+ep_files <- c('eddy-pro-cmd/data/output/eddypro_2016_calibrated_pars_full_output_2023-03-29T104926_exp.csv',
+              'data/eddy_pro_output/eddypro_2016_calibrated_pars_full_output_2022-11-08T164432_exp.csv',
+              'data/eddy_pro_output/eddypro_2016_calibrated_pars_full_output_2023-01-10T204008_exp.csv')
 
-raw_units <- as.character(ec_raw_compute[1,])
-
-ec_3m_post <- ec_raw_compute[2:nrow(ec_raw_compute),] 
-
-ec_3m_post <- ec_3m_post |> 
+ec_df <- purrr::map_dfr(ep_files, read.csv, skip = 1) |> 
+  filter(!filename %in% c('not_enough_data', '')) |> 
   mutate(
-    TIMESTAMP = as.POSIXct(paste(date, time), tz = 'GMT-6'),
+    datetime = as.POSIXct(paste(date, time), tz = 'Etc/GMT+6'),
     across(DOY:w.h2o_cov, as.numeric)) |> 
-  select(TIMESTAMP, Tau:qc_h2o_flux, 
+  select(datetime, LE, H, wind_speed,
+         Tau:qc_h2o_flux, 
          air_temperature, 
          air_pressure, 
          water_vapor_density,
          wind_speed,
          max_wind_speed, 
          wind_dir_mag = wind_dir, 
-         used_records
-  )
+         used_records) |> 
+  arrange(datetime)
 
 # apply LiCOR quality flags already calculated using  Foken et al., 2004; Foken and Wichura, 1996; Göckede et al., 2008
 # Mauder and Foken 2004: policy described in the documentation of the TK2 Eddy Covariance software 
@@ -46,17 +46,15 @@ ec_3m_post <- ec_3m_post |>
 # flag attains the value “0” for best quality fluxes, “1” for fluxes suitable for general analysis such as annual 
 # budgets and “2” for fluxes that should be discarded from the results dataset.
 
-ec_3m_post_fltr <- ec_3m_post
-
 acceptible_flags <- c(0,1, NA)
 
 flag <- NA
 
-ec_3m_post_fltr <- wxlogR::qc_data_filter(ec_3m_post_fltr, 'Tau', 'qc_Tau', acceptible_flags, flag)
+ec_fltr <- wxlogR::qc_data_filter(ec_df, 'Tau', 'qc_Tau', acceptible_flags, flag)
 
-ec_3m_post_fltr <- wxlogR::qc_data_filter(ec_3m_post_fltr, 'H', 'qc_H', acceptible_flags, flag)
+ec_fltr <- wxlogR::qc_data_filter(ec_df, 'H', 'qc_H', acceptible_flags, flag)
 
-ec_3m_post_fltr <- wxlogR::qc_data_filter(ec_3m_post_fltr, 'LE', 'qc_LE', acceptible_flags, flag)
+ec_fltr <- wxlogR::qc_data_filter(ec_df, 'LE', 'qc_LE', acceptible_flags, flag)
 
 # bring in met data for precip analysis 
 # determine if there has been precip in the last 6 hrs
@@ -64,7 +62,7 @@ ec_3m_post_fltr <- wxlogR::qc_data_filter(ec_3m_post_fltr, 'LE', 'qc_LE', accept
 pwl_met <- readRDS('../met-data-processing/data/pwl_met_db.rds')
 
 pwl_precip_filter <- pwl_met |> 
-  select(TIMESTAMP = datetime, precip_inc) |> 
+  select(datetime, precip_inc) |> 
 # create filtering data frame for if there has been precip in the last 6 hours
   mutate(precip_sum_last_6hr = zoo::rollapply(precip_inc, 
                                             width = precip_avg_int, 
@@ -76,7 +74,7 @@ pwl_precip_filter <- pwl_met |>
                                             align = 'right'),
          precip_filter_6hr = ifelse(precip_sum_last_6hr >= precip_th_hi, 2, 0),
          precip_filter_6hr = ifelse(is.na(precip_filter_6hr) == T, 0, precip_filter_6hr)) |> 
-  select(TIMESTAMP, precip_filter_6hr)
+  select(datetime, precip_filter_6hr)
 
 # check if air temp < dewpoint as there could be potential for moisture on the lens
 
@@ -90,16 +88,16 @@ ffr_tdew_filter <- ffr_met |>
     tdew_top = psychRomet::dew_point_temp_e_act(e_act),
     tdew_filter = ifelse(AirTC_towerTop <  tdew_top, 2, 0),
     tdew_filter = ifelse(is.na(tdew_filter) == T, 0, tdew_filter)) |> 
-  select(TIMESTAMP = datetime, tdew_filter)
+  select(datetime, tdew_filter)
 
 # join met filters on raw ec data
 
-ec_3m_post_fltr <- ec_3m_post_fltr |> 
+ec_fltr <- ec_fltr |> 
   left_join(ffr_tdew_filter) |> 
   left_join(pwl_precip_filter) 
 
-ec_3m_post_fltr <- wxlogR::qc_data_filter(ec_3m_post_fltr, c('Tau', 'H', 'LE'), 'tdew_filter', acceptible_flags, NA)
-ec_3m_post_fltr <- wxlogR::qc_data_filter(ec_3m_post_fltr, c('Tau', 'H', 'LE'), 'precip_filter_6hr', acceptible_flags, NA)
+ec_fltr <- wxlogR::qc_data_filter(ec_fltr, c('Tau', 'H', 'LE'), 'tdew_filter', acceptible_flags, NA)
+ec_fltr <- wxlogR::qc_data_filter(ec_fltr, c('Tau', 'H', 'LE'), 'precip_filter_6hr', acceptible_flags, NA)
 
 # check there are sufficient number of samples in the 15min time block n>85%
 
@@ -109,13 +107,13 @@ ec_3m_post_fltr <- wxlogR::qc_data_filter(ec_3m_post_fltr, c('Tau', 'H', 'LE'), 
 
 # create complete timeseries
 
-complete_datetime <- wxlogR::datetime_seq_full(ec_3m_post_fltr$TIMESTAMP)
+complete_datetime <- wxlogR::datetime_seq_full(ec_3m_post_fltr$datetime)
 
 # standard deviation check on rolling window
 
 sd_filter <- ec_3m_post |>
 
-  pivot_longer(-c(TIMESTAMP, used_records))
+  pivot_longer(-c(datetime, used_records))
 mutate(
 
 )

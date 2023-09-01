@@ -23,13 +23,13 @@ low_wind <- readRDS('data/eddy_cov_15min_combined.rds') |>
   select(TIMESTAMP, low_ec_u_star = u_star, low_ec_rslt_wnd_spd = result_wind_spd) |>
   mutate(
     low_ec_height = ifelse(
-      TIMESTAMP >= as.POSIXct('2022-02-17 18:00:00', tz = 'GMT-6'),
+      TIMESTAMP >= as.POSIXct('2022-02-17 18:00:00', tz = 'Etc/GMT+6'),
       3,
       2),
     # low_ec_height = 2
     )
 
-hi_wind <- readRDS('../interception/data/met/met_main.rds') |> select(TIMESTAMP, top_ec_rlst_wnd_spd, top_ec_u_star)
+hi_wind <- readRDS('../met-data-processing/data/met_main.rds') |> select(TIMESTAMP = datetime, top_ec_wnd_spd, top_ec_u_star)
 
 wind_wide <- left_join(low_wind, hi_wind, by = 'TIMESTAMP')
 
@@ -56,7 +56,7 @@ pars <- low_wind |>
 # saveRDS(d_0, 'data/ffr_optim_wind_param_ec_low.rds')
 # saveRDS(d_0, 'data/ffr_optim_wind_param_ec_transition_2_3.rds')
 
-d_0 <- readRDS('data/ffr_optim_wind_param_ec_transition_2_3.rds')
+d_0 <- readRDS('data/testing/ffr_optim_wind_param_ec_transition_2_3.rds')
 
 low_wind <- cbind(low_wind, d_0[,2:3])
 ```
@@ -104,26 +104,26 @@ low_wind_fltr <- low_wind |>
     storm = 
       case_when(
         between(TIMESTAMP, 
-                as.POSIXct('2021-12-23 00:00:00', tz = 'GMT-6'), 
-                as.POSIXct('2021-12-27 00:00:00', tz = 'GMT-6')) ~ 'dec23-dec27',
+                as.POSIXct('2021-12-23 00:00:00', tz = 'Etc/GMT+6'), 
+                as.POSIXct('2021-12-27 00:00:00', tz = 'Etc/GMT+6')) ~ 'dec23-dec27',
         # tree emptied by wind on jan 2 am. unloading starts pm jan 5, looks like pluvio was snow capped
         # between(TIMESTAMP, 
-        #         as.POSIXct('2022-01-02 05:00:00', tz = 'GMT-6'), 
-        #         as.POSIXct('2022-01-05 07:00:00', tz = 'GMT-6')) ~ 'jan2-jan5',
+        #         as.POSIXct('2022-01-02 05:00:00', tz = 'Etc/GMT+6'), 
+        #         as.POSIXct('2022-01-05 07:00:00', tz = 'Etc/GMT+6')) ~ 'jan2-jan5',
         between(TIMESTAMP, 
-                as.POSIXct('2022-01-17 10:00:00', tz = 'GMT-6'), 
-                as.POSIXct('2022-01-18 10:00:00', tz = 'GMT-6')) ~ 'jan17-jan18',
+                as.POSIXct('2022-01-17 10:00:00', tz = 'Etc/GMT+6'), 
+                as.POSIXct('2022-01-18 10:00:00', tz = 'Etc/GMT+6')) ~ 'jan17-jan18',
         between(TIMESTAMP, 
-                as.POSIXct('2022-02-19 10:00:00', tz = 'GMT-6'), 
-                as.POSIXct('2022-02-20 10:00:00', tz = 'GMT-6')) ~ 'feb19-feb20',
+                as.POSIXct('2022-02-19 10:00:00', tz = 'Etc/GMT+6'), 
+                as.POSIXct('2022-02-20 10:00:00', tz = 'Etc/GMT+6')) ~ 'feb19-feb20',
         # smaller storm with what appears to be sublimation starting at 10 am mar 24
         between(TIMESTAMP, 
-                as.POSIXct('2022-03-24 00:00:00', tz = 'GMT-6'), 
-                as.POSIXct('2022-03-24 09:45:00', tz = 'GMT-6')) ~ 'mar24',
+                as.POSIXct('2022-03-24 00:00:00', tz = 'Etc/GMT+6'), 
+                as.POSIXct('2022-03-24 09:45:00', tz = 'Etc/GMT+6')) ~ 'mar24',
         # wind speed picks up at 6 pm on the 4th 
         between(TIMESTAMP, 
-                as.POSIXct('2022-04-04 00:00:00', tz = 'GMT-6'), 
-                as.POSIXct('2022-04-04 18:00:00', tz = 'GMT-6')) ~ 'apr4'
+                as.POSIXct('2022-04-04 00:00:00', tz = 'Etc/GMT+6'), 
+                as.POSIXct('2022-04-04 18:00:00', tz = 'Etc/GMT+6')) ~ 'apr4'
       )
   ) |> 
   filter(is.na(storm) == F)
@@ -193,26 +193,26 @@ hi_wind_fltr <- hi_wind |>
     storm = 
       case_when(
         between(TIMESTAMP, 
-                as.POSIXct('2021-12-23 00:00:00', tz = 'GMT-6'), 
-                as.POSIXct('2021-12-27 00:00:00', tz = 'GMT-6')) ~ 'dec23-dec27',
+                as.POSIXct('2021-12-23 00:00:00', tz = 'Etc/GMT+6'), 
+                as.POSIXct('2021-12-27 00:00:00', tz = 'Etc/GMT+6')) ~ 'dec23-dec27',
         # tree emptied by wind on jan 2 am. unloading starts pm jan 5, looks like pluvio was snow capped
         # between(TIMESTAMP, 
-        #         as.POSIXct('2022-01-02 05:00:00', tz = 'GMT-6'), 
-        #         as.POSIXct('2022-01-05 07:00:00', tz = 'GMT-6')) ~ 'jan2-jan5',
+        #         as.POSIXct('2022-01-02 05:00:00', tz = 'Etc/GMT+6'), 
+        #         as.POSIXct('2022-01-05 07:00:00', tz = 'Etc/GMT+6')) ~ 'jan2-jan5',
         between(TIMESTAMP, 
-                as.POSIXct('2022-01-17 10:00:00', tz = 'GMT-6'), 
-                as.POSIXct('2022-01-18 10:00:00', tz = 'GMT-6')) ~ 'jan17-jan18',
+                as.POSIXct('2022-01-17 10:00:00', tz = 'Etc/GMT+6'), 
+                as.POSIXct('2022-01-18 10:00:00', tz = 'Etc/GMT+6')) ~ 'jan17-jan18',
         between(TIMESTAMP, 
-                as.POSIXct('2022-02-19 10:00:00', tz = 'GMT-6'), 
-                as.POSIXct('2022-02-20 10:00:00', tz = 'GMT-6')) ~ 'feb19-feb20',
+                as.POSIXct('2022-02-19 10:00:00', tz = 'Etc/GMT+6'), 
+                as.POSIXct('2022-02-20 10:00:00', tz = 'Etc/GMT+6')) ~ 'feb19-feb20',
         # smaller storm with what appears to be sublimation starting at 10 am mar 24
         between(TIMESTAMP, 
-                as.POSIXct('2022-03-24 00:00:00', tz = 'GMT-6'), 
-                as.POSIXct('2022-03-24 09:45:00', tz = 'GMT-6')) ~ 'mar24',
+                as.POSIXct('2022-03-24 00:00:00', tz = 'Etc/GMT+6'), 
+                as.POSIXct('2022-03-24 09:45:00', tz = 'Etc/GMT+6')) ~ 'mar24',
         # wind speed picks up at 6 pm on the 4th 
         between(TIMESTAMP, 
-                as.POSIXct('2022-04-04 00:00:00', tz = 'GMT-6'), 
-                as.POSIXct('2022-04-04 18:00:00', tz = 'GMT-6')) ~ 'apr4'
+                as.POSIXct('2022-04-04 00:00:00', tz = 'Etc/GMT+6'), 
+                as.POSIXct('2022-04-04 18:00:00', tz = 'Etc/GMT+6')) ~ 'apr4'
       )
   ) |> 
   filter(is.na(storm) == F)

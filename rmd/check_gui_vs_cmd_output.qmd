@@ -1,0 +1,71 @@
+---
+title: "Check Command Line EP vs GUI"
+author: "Alex Cebulski"
+format: html
+---
+
+Initially I ran the EC processing using the Eddy Pro gui software over wine but this was randomly changing some of the metadata variables so I investigated using the licor command line eddy-pro hosted on github [here](https://github.com/LI-COR/eddypro-engine). 
+
+The follow plots show that these produce the same output when the same config file was used. 
+
+```{r}
+#| include: false
+
+library(tidyverse)
+
+# processed on gui
+
+ec_raw_compute1 <- read.csv('../data/eddy_pro_output/eddypro_2016_calibrated_pars_full_output_2022-11-08T164432_exp.csv', skip = 1)
+
+raw_units <- as.character(ec_raw_compute1[1,])
+
+ec_raw_compute1 <- ec_raw_compute1[2:nrow(ec_raw_compute1),] 
+
+ec_raw_compute2 <- read.csv('../data/eddy_pro_output/eddypro_2016_calibrated_pars_full_output_2023-01-10T204008_exp.csv', skip = 1)
+
+ec_raw_compute2 <- ec_raw_compute2[2:nrow(ec_raw_compute2),] 
+
+ec_raw_compute <- rbind(ec_raw_compute1, ec_raw_compute2)
+
+ec_3m_post <- ec_raw_compute |> 
+mutate(
+  datetime = as.POSIXct(paste(date, time), tz = 'Etc/GMT+6'),
+  across(DOY:w.h2o_cov, as.numeric)) |> 
+select(datetime, c(LE, H, wind_speed)) |> 
+  pivot_longer(!datetime) |> 
+  filter(abs(value)  < 9999)
+
+# processed on command line 
+
+ec_raw_compute_cmd <- read.csv('../eddy-pro-cmd/data/output/eddypro_2016_calibrated_pars_full_output_2023-03-29T104926_exp.csv', skip = 1)
+
+ec_raw_compute_cmd <- ec_raw_compute_cmd[2:nrow(ec_raw_compute_cmd),] 
+
+ec_3m_post_cmd <- ec_raw_compute_cmd |> 
+mutate(
+  datetime = as.POSIXct(paste(date, time), tz = 'Etc/GMT+6'),
+  across(DOY:w.h2o_cov, as.numeric)) |> 
+select(datetime, c(LE, H, wind_speed)) |> 
+  pivot_longer(!datetime) |> 
+  filter(abs(value)  < 9999)
+  
+```
+
+```{r}
+jn <- left_join(ec_3m_post, ec_3m_post_cmd, by = c('datetime', 'name') , suffix = c("_gui", "_cmd"))
+
+jn |> 
+  ggplot(aes(value_gui, value_cmd)) + 
+  geom_point() +
+  geom_abline() +
+  facet_wrap(~name, scales = 'free')
+
+rbind(ec_3m_post |> mutate(group = 'gui'), ec_3m_post_cmd|> mutate(group = 'cmd')) |> 
+  ggplot(aes(datetime, value, colour = group)) + 
+  geom_line() +
+  geom_abline() +
+  facet_wrap(~name, scales = 'free')
+
+plotly::ggplotly()
+```
+

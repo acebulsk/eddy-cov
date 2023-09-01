@@ -97,7 +97,7 @@ ggplot(wnd, aes(TIMESTAMP, value, colour = flag)) +
 
   mutate(
     low_ec_height = ifelse(
-      TIMESTAMP >= as.POSIXct('2022-02-17 18:00:00', tz = 'GMT-6'),
+      TIMESTAMP >= as.POSIXct('2022-02-17 18:00:00', tz = 'Etc/GMT+6'),
       '3m',
       '2m'
     ),

@@ -57,7 +57,7 @@ plotly::ggplotly()
 
 # jan 16 looks good, confirmed no new snow with wingscape camera
 
-jan16 <- wnd |> filter(TIMESTAMP == as.POSIXct('2022-01-16 16:00:00', tz = 'GMT-6'))
+jan16 <- wnd |> filter(TIMESTAMP == as.POSIXct('2022-01-16 16:00:00', tz = 'Etc/GMT+6'))
 
 # calculate instument heights (rough using lidar and measured SR50 height)
 sr50_ht <- 2.65

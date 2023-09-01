@@ -10,36 +10,39 @@ runtime: shiny
 knitr::opts_chunk$set(echo = TRUE, fig.height=2, fig.width=8)
 setwd("~/local-usask/analysis/eddy-cov/rmd")
 
-
 library(data.table)
 library(plotly)
 library(tidyverse)
 library(wxlogR)
+library(shiny)
 
 # 3m EC data
+getwd()
 
-# processed
+ep_files <- c('../eddy-pro-cmd/data/output/eddypro_2016_calibrated_pars_full_output_2023-03-29T104926_exp.csv',
+              '../eddy-pro-cmd/data/output/eddypro_2016_calibrated_pars_full_output_2023-03-29T122318_exp.csv',
+              '../data/eddy_pro_output/eddypro_2016_calibrated_pars_full_output_2022-11-08T164432_exp.csv',
+              '../data/eddy_pro_output/eddypro_2016_calibrated_pars_full_output_2023-01-10T204008_exp.csv')
 
-ec_raw_compute1 <- read.csv('../data/eddy_pro_output/eddypro_2016_calibrated_pars_full_output_2022-11-08T164432_exp.csv', skip = 1)
+ec_df <- purrr::map_dfr(ep_files, read.csv, skip = 1) |> 
+  filter(!filename %in% c('not_enough_data', '')) |> 
+  mutate(
+    datetime = as.POSIXct(paste(date, time), tz = 'Etc/GMT+6'),
+    across(DOY:w.h2o_cov, as.numeric)) |> 
+  select(datetime,
+         u_star = u.,
+         Tau:qc_h2o_flux, 
+         air_temperature, 
+         air_pressure, 
+         water_vapor_density,
+         wind_speed,
+         max_wind_speed, 
+         wind_dir_mag = wind_dir, 
+         used_records) |> 
+  arrange(datetime)
 
-raw_units <- as.character(ec_raw_compute1[1,])
-
-ec_raw_compute1 <- ec_raw_compute1[2:nrow(ec_raw_compute1),] 
-
-ec_raw_compute2 <- read.csv('../data/eddy_pro_output/eddypro_2016_calibrated_pars_full_output_2023-01-10T204008_exp.csv', skip = 1)
-
-ec_raw_compute2 <- ec_raw_compute2[2:nrow(ec_raw_compute2),] 
-
-ec_raw_compute <- rbind(ec_raw_compute1, ec_raw_compute2)
-
-ec_3m_post <- ec_raw_compute |> 
-mutate(
-  datetime = as.POSIXct(paste(date, time), tz = 'GMT-6'),
-  across(DOY:w.h2o_cov, as.numeric)) |> 
-select(datetime, DOY:w.h2o_cov)
-
-ec_3m_logr <- readRDS('../../met-data-processing/data/ec_logr_15min_avg_low.rds') |> 
-mutate(LE = -LE)
+ec_df_logr <- readRDS('../../met-data-processing/data/ec_logr_15min_avg_low.rds') |> 
+  mutate(LE = -LE)
 
 # raw
 
@@ -52,7 +55,7 @@ mutate(LE = -LE)
 ec_15m_logr <- readRDS('../../met-data-processing/data/waterloo_1000_ec_main.rds')
 
 # met data from all loggers 
-met <- readRDS('../../met-data-processing/data/met_main_th.rds') 
+met <- readRDS('../../met-data-processing/data/ffr_t_rh_u_qaqc_fill.rds') 
 
 ```
 
@@ -60,10 +63,10 @@ met <- readRDS('../../met-data-processing/data/met_main_th.rds')
 
 ```{r, echo=FALSE, warning=FALSE}
 
-ec_3m_post_long <- ec_3m_post |> 
+ec_3m_post_long <- ec_df |> 
 pivot_longer(!datetime)
 
-ec_3m_logr_long <- ec_3m_logr |> 
+ec_3m_logr_long <- ec_df_logr |> 
 pivot_longer(!datetime)
 
 ec_15m_logr_long <- ec_15m_logr |> 
@@ -98,7 +101,7 @@ selectInput(inputId = 'ec_15m_logr_var',
 selectInput(inputId = 'met_var', 
             label = 'Met Tower Variables: ', 
             choices = unique(met_long$name), 
-            selected = c("SnowDepth"), multiple = T),
+            selected = c("air_temp"), multiple = T),
 numericInput(
   inputId = 'fig_height',
   label = 'Figure Height in Pixels:',
@@ -203,7 +206,7 @@ plotOutput('ec_bind_plot', height = input$fig_height)
 met_long_fltr <-  reactive({
 req(input$ec_15m_logr_var)
 req(input$sliderTimeRange)
-
+browser()
 met_long |> 
   filter(name %in% c(input$met_var),
         datetime >= input$sliderTimeRange[1] & datetime <= input$sliderTimeRange[2],
