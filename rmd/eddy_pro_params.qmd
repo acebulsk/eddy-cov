@@ -77,7 +77,9 @@ North offset from https://www.licor.com/env/support/EddyPro/topics/north-offset.
     For post-mounted anemometers (e.g., Gill WindMaster® and Metek USA-1), a tag is normally provided to align the anemometer correctly with respect to due north. The anemometer, however, can be placed in any position. If it is positioned with the north arrow aligned off of north, the yaw offset must be measured and provided here. The offset angle should be provided in degrees past north as a positive value representing the angle from geographic north (from an overhead view, degrees past north are in the clockwise direction). Yoke-mounted anemometers (Gill HS and Campbell® Scientific CSAT3) are normally oriented facing the prevailing wind direction and independently of due north. In these cases, provide the angle between the main axis of the anemometer (pointing away from the support arm) and due north, with the same sign convention as with vertical mounted anemometers.
 
 Measured Eddie covariance lower tower direction using Suunto compass with 18° declination. on june 29 2022.
-Compass reads 120° using the box pointing through the claws
+Compass reads 120° using the box pointing through the claws.
+
+Confirmed again on Aug 23, 2023, using Iphone compass with true north selected on which read 126 deg.. very close to the suunto compass below. 
 
 
 ```{r}
@@ -99,6 +101,29 @@ estimated using iphone image. need to double check with in-situ measurement.
 
 - northward separation: 8 cm
 - eastward separation: 4 cm
+
+Aug 23, 2023 measurement 
+
+using iphone compass measured 18 cm separation between csat claws and kh20 path on a line 25 deg from north.
+
+$$
+Sin\theta = \frac{Opp}{Hyp}
+$$
+$$
+Cos\theta = \frac{Adj}{Hyp}
+$$
+where $Hyp$ is the distance we measured, $Opp$ is the eastward separation, and $Adj$ is the northward separation. 
+
+```{r}
+inst_sep <- 18 # cm, the hypotenuse of the triangle 
+inst_deg <- 25 # deg from north, the angle between the adjacent and hypotenuse legs of the triangle
+inst_rad <- 25 * (pi  / 180)
+
+north_sep <- cos(inst_rad) * inst_sep
+east_sep <- sin(inst_rad) * inst_sep
+```
+
+The northward separation is `north_sep` (cm) and the eastward separation is `east_sep` (cm).
 
 Path Length (KH20)
 
