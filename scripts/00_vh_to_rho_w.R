@@ -11,6 +11,10 @@ library(logr)
 # on logger screen under data menu
 # 2023-06-02 2023-06-29 card problem again 
 
+# So far have run the full 2 water years of EC data from Oct 2021 to Aug 2023
+# and then ran eddy pro on the cmd line to post process these data using the aug
+# 2023 measured instrument heights and using the 2016 instrument calibration.
+
 # define some paths ----
 
 # path_hdd <- "/media/alex/CRHO PHOTOS/field-downloads/met-data/hi-freq/"
@@ -90,8 +94,8 @@ complete_files_date <- as.POSIXct(complete_files_date, "%Y_%m_%d_%H:%M", tz = 'E
 # visualize what files we have completed so far 
 df_complete_files_date <- data.frame(datetime = complete_files_date, filename = complete_files, val = 1)
 
-# wxlogR::plot_data_gaps(df_complete_files_date$datetime)
-# plotly::ggplotly()
+wxlogR::plot_data_gaps(df_complete_files_date$datetime)
+plotly::ggplotly()
 
 # check the raw files ---- 
 
