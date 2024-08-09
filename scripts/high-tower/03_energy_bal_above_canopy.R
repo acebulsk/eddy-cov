@@ -10,7 +10,7 @@ library(plotly)
 # do lidar.
 
 # The final radiation dataset contains:
-# 1. measured shortwave in from the CNR4 at Fortress Ridge South (aka or FFR crhm QSi choice)
+# 1. measured shortwave in from the CNR4 at Fortress Ridge (aka or FFR crhm QSi choice)
 # 2. shortwave out is from measured SW in above modelled albedo for the snow and steadty for canopy and a weighed average depending on the sky view fraction to calculate the final value
 # 3. lw in is calculated using sicart 2006 eq. 9, LW irradiance in open environments
 # 4. lw out is calculated from the snow and tree IRTC and a sky view fraction based weighted average 

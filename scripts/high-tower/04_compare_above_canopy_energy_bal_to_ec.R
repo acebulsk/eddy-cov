@@ -1,6 +1,6 @@
 # Compare EC measurements to above canopy energy balance
 
-# TODO how to take into acout change in energy in snow pack to do this? 
+# tried more lax EC qaqc but had marginal effects
 
 # H is negative in winter with the atmosphere loosing heat to the cold surface,
 # and in summer H is positive gaining heat from the surface. LE is always
@@ -63,7 +63,9 @@ ec_dly |>
   ylab('Mean Daily Energy Flux (w m -2)') +
   xlab(element_blank())
 
-# ggplotly()
+ggsave('figs/energy-bal-assessment/high-tower/mean_daily_turbulent_fluxes_high_tower.png', width = 8.5, height = 4)
+
+ggplotly()
 
 energy_fluxes_individual <- cp_eb_dly |> 
   mutate(lw = lw_in - lw_out,
@@ -74,13 +76,13 @@ energy_fluxes_individual <- cp_eb_dly |>
   rbind(ec_dly |> 
           pivot_longer(!date) |> mutate(group = 'turbulent fluxes'))
 
-
-
 energy_fluxes_individual |> 
   ggplot(aes(date, value, fill = name)) +
   geom_bar(stat = 'identity', position = 'stack') +
   ylab('Mean Daily Energy Flux (w m -2)') +
   xlab(element_blank())
+
+ggsave('figs/energy-bal-assessment/high-tower/mean_daily_indiv_turbulent_and_rad_fluxes_high_tower.png', width = 8.5, height = 4)
 
 ggplotly()
 

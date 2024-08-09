@@ -8,12 +8,14 @@
 # 2. Major max/min thresholding across all vars 
 # 3. Wet lens filtering 6 hrs after precip are filterd as likely have precip on the lens (taken from Warren Helgasons class EC qc workflow)
 # 4. Calculate a sd filter using a rolling window similar to standardized departures used in MSc times and the Waterloo EC workflow.
-# TODO apply regular spike detection and flatline detection from CRHM 
+
+# TODO should probably be more lax with LE and H filtering 
 # TODO look at Reba 2009 methods, they do not mention any details of their QAQC
 # tests but just reference the use of the Quality Control Software.. could dig
 # into this if needed.
-# TODO could also go from 15 min averaging to 10 minute averager as in Reba 2009
+# TODO could also go from 15 min averaging to 10 minute average as in Reba 2009
 # or could also try 30 min as used in most other homogeneous studies
+
 
 library(wxlogR)
 library(tidyverse)
@@ -26,25 +28,29 @@ options(scipen = 999)
 
 # define constants ----
 
-lag_count_filter_switch <- 1 # set to 0 if we want to remove samples that have not been properly QC'd
-
-th_hi <- 200
-th_low <- -200
+th_hi <- 999
+th_low <- -999
 eddy_pro_nan <- -9999.000
 
 global_le_min <- -40 # on visual inspection all LE below -40 is erroneous
 spike_th_le_hi <- 150
 # spike_th_le_lo <- 20
-spike_th_le_both <- 150
+# spike_th_le_both <- 150
 
 global_h_min <- -150
-spike_th_h_hi <- 150
-spike_th_h_both <- 150
+spike_th_h_hi <- 300
+spike_th_h_both <- 300
+spike_th_h_lo <- 300
 
-global_u_star_max <- 1
+global_u_star_max <- 5
 global_u_star_min <- 0
 spike_th_u_star_hi <- 5
 spike_th_u_star_both <- 5
+
+global_tau_max <- 10
+global_tau_min <- 0
+spike_th_tau_hi <- 5
+spike_th_tau_both <- 5
 
 data_avg_min <- 15
 data_hz <- 20
@@ -58,18 +64,20 @@ precip_th_hi <- 1 # min threshold to flag as precip in mm
 flag <- NA
 bad_flag <- 2 # “2” for fluxes that should be discarded from the results dataset from Foken et al., 2004. 
 
-# TODO try diff sd for removal
-n_sd <- 10 # number of sd above / below the mean, taken after the U waterloo EC script which they reference is from Aubinet et al "Eddy Covariance" book, pp.68-69
-
 le_num <- 1
 h_num <- 2
 wind_num <- 4
 u_star_num <- 5
 max_w_num <- 8
 
-qc_vars <- c("LE",
-             "H",
-             "u_star")
+qc_vars <- c(
+  'LE',
+  'H',
+  'Tau',
+  'u_star',
+  'wind_speed',
+  'wind_dir_mag'
+)
 
 # bring in raw data from eddy pro
 
@@ -88,14 +96,15 @@ qc_vars <- c("LE",
 #          wind_dir_mag = wind_dir) |>
 #     mutate(
 #       datetime = as.POSIXct(paste(date, time), tz = 'Etc/GMT+6'),
-#       across(used_records:wind_dir_mag, as.numeric)) |>
+#       across(used_records:wind_dir_mag, as.numeric),
+#       Tau = -Tau) |>
 #   select(datetime, used_records:wind_dir_mag) |>
 #   arrange(datetime) |>
 #   distinct()
-# 
-# saveRDS(ec_df, 'data/eddy_cov_cmd_15min_2021_2023.rds')
 
-ec_df <- readRDS('data/eddy_cov_cmd_15min_2021_2023.rds')
+# saveRDS(ec_df, 'data/low-tower/low_tower_15min_2021_2023.rds')
+
+ec_df <- readRDS('data/low-tower/low_tower_15min_2021_2023.rds')
 
 # Folken et al., 2004 QAQC ----
 
@@ -110,6 +119,7 @@ ec_df <- readRDS('data/eddy_cov_cmd_15min_2021_2023.rds')
 # we can use the Tau flag to qc u_star because 
 # u_star ^ 2 = abs(tau/density of air)
 ec_fltr <- wxlogR::qc_data_filter(ec_df, 'u_star', 'qc_Tau', bad_flag, flag)
+ec_fltr <- wxlogR::qc_data_filter(ec_df, 'Tau', 'qc_Tau', bad_flag, flag)
 ec_fltr <- wxlogR::qc_data_filter(ec_fltr, 'H', 'qc_H', bad_flag, flag)
 ec_fltr <- wxlogR::qc_data_filter(ec_fltr, 'LE', 'qc_LE', bad_flag, flag)
 
@@ -180,9 +190,9 @@ tdew_filter <- met |>
 
 # visualize the tdew filtering
 
-# tdew_df <- tdew_filter |>
-#   filter(tdew_filter == bad_flag)
-# 
+tdew_df <- tdew_filter |>
+  filter(tdew_filter == bad_flag)
+
 # ggplot(tdew_filter, aes(datetime, rh)) +
 #   geom_line() +
 #   geom_point(data = tdew_df, aes(x = datetime), shape = 4, colour = 'red')
@@ -241,35 +251,19 @@ le_fltr <- global_var_fltrd |>
 le_spikes_dates <- CRHMr::findSpikes(
   le_fltr,
   colnum = le_num,
-  threshold = spike_th_le_both,
-  spike_direction = 'both'
+  threshold = spike_th_le_hi,
+  spike_direction = 'hi'
 )
 
-# plotFlags(le_fltr, le_spikes_dates, le_num)
-# ggplotly()
+plotFlags(le_fltr, le_spikes_dates, le_num)
+ggplotly()
 
 le_fltr_delete <- CRHMr::deleteSpikes(
   le_fltr,
   colnum = le_num,
-  threshold = spike_th_le_both,
-  spike_direction = 'both'
+  threshold = spike_th_le_hi,
+  spike_direction = 'hi'
 )
-
-le_spike <- le_fltr_delete |>
-  filter(is.na(LE) == F) |>
-  CRHMr::findSpikes(colnum = le_num,
-                    threshold = 100,
-                    spike_direction = 'hi')
-
-# plotFlags(le_fltr_delete, le_spike, le_num)
-# 
-# ggplotly()
-
-le_fltr_delete <- le_fltr_delete |>
-  filter(is.na(LE) == F) |>
-  CRHMr::deleteSpikes(colnum = le_num,
-                    threshold = 100,
-                    spike_direction = 'hi')
 
 # commented this out because we normally have outliers above the mean not below
 # could add again below after our rolling window filtering
@@ -282,8 +276,6 @@ le_fltr_delete <- le_fltr_delete |>
 # plotFlags(global_var_fltrd, le_spikes_dates, le_num)
 #
 # ggplotly()
-
-
 
 ### STDEV check on rolling window WIDE ----
 
@@ -299,10 +291,11 @@ le_sd_spikes_dates <- CRHMr::findSpikesStdevWindow(le_sd_spikes_nonan,
                                                    colnum = le_num,
                                                    lead_window = lead_window,
                                                    lag_window = lag_window,
-                                                   number_sd = 10
+                                                   number_sd = 10,
+                                                   include_start_end = F
                                                    )
 
-# CRHMr::plotFlags(le_fltr_delete, le_sd_spikes_dates, le_num)
+CRHMr::plotFlags(le_fltr_delete, le_sd_spikes_dates, le_num)
 # 
 # ggplotly()
 
@@ -311,7 +304,8 @@ le_sd_spikes_rm <- CRHMr::deleteSpikesStdevWindow(le_sd_spikes_nonan,
                                                   colnum = le_num,
                                                   lead_window = lead_window,
                                                   lag_window = lag_window,
-                                                  number_sd = 10)
+                                                  number_sd = 10,
+                                                  include_start_end = F)
 
 # ggplot(le_sd_spikes_rm, aes(datetime, LE)) +
 #   geom_line()
@@ -332,7 +326,8 @@ le_sd_spikes_dates <- CRHMr::findSpikesStdevWindow(le_sd_spikes_nonan,
                                                    colnum = le_num,
                                                    lead_window = lead_window,
                                                    lag_window = lag_window,
-                                                   number_sd = 9
+                                                   number_sd = 9,
+                                                   include_start_end = F
 )
 
 # CRHMr::plotFlags(le_sd_spikes_nonan, le_sd_spikes_dates, le_num)
@@ -344,7 +339,8 @@ le_sd_spikes_rm <- CRHMr::deleteSpikesStdevWindow(le_sd_spikes_nonan,
                                                   colnum = le_num,
                                                   lead_window = lead_window,
                                                   lag_window = lag_window,
-                                                  number_sd = 9)
+                                                  number_sd = 9,
+                                                  include_start_end = F)
 le_sd_spikes_nonan <- le_sd_spikes_rm |>
   select(datetime, LE) |>
   filter(is.na(LE) == F)
@@ -354,7 +350,8 @@ le_sd_spikes_dates <- CRHMr::findSpikesStdevWindow(le_sd_spikes_nonan,
                                                    colnum = le_num,
                                                    lead_window = lead_window,
                                                    lag_window = lag_window,
-                                                   number_sd = 9
+                                                   number_sd = 9,
+                                                   include_start_end = F
 )
 
 # CRHMr::plotFlags(le_sd_spikes_nonan, le_sd_spikes_dates, le_num)
@@ -368,7 +365,8 @@ le_out <- CRHMr::deleteSpikesStdevWindow(le_sd_spikes_nonan,
                                                   colnum = le_num,
                                                   lead_window = lead_window,
                                                   lag_window = lag_window,
-                                                  number_sd = 9)
+                                                  number_sd = 9,
+                                         include_start_end = F)
 
 ### manual removal ----
 
@@ -386,8 +384,8 @@ le_out <- CRHMr::deleteSpikesStdevWindow(le_sd_spikes_nonan,
 
 ### variable specific thresholding ----
 
-# h_df <- global_var_fltrd |> 
-#   select(datetime, H)
+h_df <- global_var_fltrd |>
+  select(datetime, H)
 # 
 # h_df |>
 #   ggplot(aes(datetime, H)) + geom_line()
@@ -404,18 +402,48 @@ h_df_fltr <- h_df |>
 
 ### spike detection ----
 
-# commented this out after trying some lax filters which still removed good data 
+#### detect hi and low spikes ----
+h_spikes_dates <- CRHMr::findSpikes(
+  h_df_fltr,
+  colnum = 1,
+  threshold = spike_th_h_both,
+  spike_direction = 'both'
+)
 
-# 
-# h_spikes_dates <- CRHMr::findSpikes(
-#   h_df_fltr,
-#   colnum = 1,
-#   threshold = spike_th_h_hi,
-#   spike_direction = 'hi'
-# )
-# 
 # plotFlags(h_df_fltr, h_spikes_dates, 1)
 # ggplotly()
+
+h_df_fltr <- CRHMr::deleteSpikes(
+  h_df_fltr,
+  colnum = 1,
+  threshold = spike_th_h_both,
+  spike_direction = 'both'
+)
+
+h_df_fltr <- h_df_fltr |>
+  filter(is.na(H) == F)
+
+#### detect hi spikes ----
+
+h_spikes_dates <- CRHMr::findSpikes(
+  h_df_fltr,
+  colnum = 1,
+  threshold = spike_th_h_hi,
+  spike_direction = 'hi'
+)
+
+# plotFlags(h_df_fltr, h_spikes_dates, 1)
+# ggplotly()
+
+h_df_fltr <- CRHMr::deleteSpikes(
+  h_df_fltr,
+  colnum = 1,
+  threshold = spike_th_h_hi,
+  spike_direction = 'hi'
+)
+
+h_df_fltr <- h_df_fltr |>
+  filter(is.na(H) == F)
 
 ### STDEV check on rolling window WIDE ----
 
@@ -427,7 +455,8 @@ h_spike_dates <- CRHMr::findSpikesStdevWindow(h_df_fltr,
                                                    colnum = 1,
                                                    lead_window = lead_window,
                                                    lag_window = lag_window,
-                                                   number_sd = 8
+                                                   number_sd = 8,
+                                              include_start_end = F
 )
 
 # CRHMr::plotFlags(h_df_fltr, h_spike_dates, 1)
@@ -439,7 +468,8 @@ h_sd_spikes_rm <- CRHMr::deleteSpikesStdevWindow(h_df_fltr,
                                                   colnum = 1,
                                                   lead_window = lead_window,
                                                   lag_window = lag_window,
-                                                  number_sd = 8)
+                                                  number_sd = 8,
+                                                 include_start_end = F)
 
 ### STDEV check on rolling window NARROW ----
 
@@ -454,7 +484,8 @@ h_spike_dates <- CRHMr::findSpikesStdevWindow(h_df_fltr,
                                                    colnum = 1,
                                                    lead_window = lead_window,
                                                    lag_window = lag_window,
-                                                   number_sd = 5
+                                                   number_sd = 5,
+                                              include_start_end = F
 )
 
 # CRHMr::plotFlags(h_df_fltr, h_spike_dates, 1)
@@ -466,7 +497,8 @@ h_sd_spikes_rm <- CRHMr::deleteSpikesStdevWindow(h_df_fltr,
                                                   colnum = 1,
                                                   lead_window = lead_window,
                                                   lag_window = lag_window,
-                                                  number_sd = 5)
+                                                  number_sd = 5,
+                                                 include_start_end = F)
 h_df_fltr <- h_sd_spikes_rm |> 
   filter(is.na(H) == F)
 
@@ -478,7 +510,8 @@ h_spike_dates <- CRHMr::findSpikesStdevWindow(h_df_fltr,
                                               colnum = 1,
                                               lead_window = lead_window,
                                               lag_window = lag_window,
-                                              number_sd = 10
+                                              number_sd = 10,
+                                              include_start_end = F
 )
 
 # CRHMr::plotFlags(h_df_fltr, h_spike_dates, le_num)
@@ -490,7 +523,8 @@ h_sd_spikes_rm <- CRHMr::deleteSpikesStdevWindow(h_df_fltr,
                                                  colnum = 1,
                                                  lead_window = lead_window,
                                                  lag_window = lag_window,
-                                                 number_sd = 10)
+                                                 number_sd = 10,
+                                                 include_start_end = F)
 
 h_df_fltr <- h_sd_spikes_rm |> 
   filter(is.na(H) == F)
@@ -504,7 +538,7 @@ h_df_fltr <- h_sd_spikes_rm |>
 
 manual_spike_dates <- c('2022-05-06 06:30:00', 
                         '2022-05-06 07:30:00', 
-                        '2021-11-22 19:30:00' ) |> as.POSIXct()
+                        '2021-11-22 19:30:00' ) |> as.POSIXct(tz = 'Etc/GMT+6')
 
 h_out <- h_df_fltr |> 
   filter(!datetime %in% manual_spike_dates)
@@ -527,8 +561,8 @@ u_star_df <- global_var_fltrd |>
 # plotly::ggplotly()
 
 u_star_df$u_star_qc <- 0
-u_star_df$u_star_qc <- ifelse(u_star_df$u_star < global_u_star_min, 2, u_star_df$u_star_qc)
-u_star_df$u_star_qc <- ifelse(u_star_df$u_star > global_u_star_max, 2, u_star_df$u_star_qc)
+u_star_df$u_star_qc <- ifelse(u_star_df$u_star < global_u_star_min, bad_flag, u_star_df$u_star_qc)
+u_star_df$u_star_qc <- ifelse(u_star_df$u_star > global_u_star_max, bad_flag, u_star_df$u_star_qc)
 
 u_star_df <- wxlogR::qc_data_filter(u_star_df, 'u_star', 'u_star_qc', bad_flag, flag)
 
@@ -540,25 +574,25 @@ u_star_df_fltr <- u_star_df |>
 
 # commented this out after trying some lax filters which still removed good data 
 
-u_star_spikes_dates <- CRHMr::findSpikes(
-  u_star_df_fltr,
-  colnum = 1,
-  threshold = .5,
-  spike_direction = 'hi'
-)
-
-# plotFlags(u_star_df_fltr, u_star_spikes_dates, 1)
-# ggplotly()
-
-u_star_fltr_delete <- CRHMr::deleteSpikes(
-  u_star_df_fltr,
-  colnum = 1,
-  threshold = 0.5,
-  spike_direction = 'both'
-)
-
-u_star_df_fltr <- u_star_fltr_delete |>
-  filter(is.na(u_star) == F) 
+# u_star_spikes_dates <- CRHMr::findSpikes(
+#   u_star_df_fltr,
+#   colnum = 1,
+#   threshold = .5,
+#   spike_direction = 'hi'
+# )
+# 
+# # plotFlags(u_star_df_fltr, u_star_spikes_dates, 1)
+# # ggplotly()
+# 
+# u_star_fltr_delete <- CRHMr::deleteSpikes(
+#   u_star_df_fltr,
+#   colnum = 1,
+#   threshold = 0.5,
+#   spike_direction = 'both'
+# )
+# 
+# u_star_df_fltr <- u_star_fltr_delete |>
+#   filter(is.na(u_star) == F) 
 
 
 ### STDEV check on rolling window WIDE ----
@@ -571,77 +605,27 @@ u_star_spike_dates <- CRHMr::findSpikesStdevWindow(u_star_df_fltr,
                                               colnum = 1,
                                               lead_window = lead_window,
                                               lag_window = lag_window,
-                                              number_sd = 8
+                                              number_sd = 8,
+                                              include_start_end = F
 )
 
 # CRHMr::plotFlags(u_star_df_fltr, u_star_spike_dates, 1)
 # 
 # ggplotly()
 
-u_star_sd_spikes_rm <- CRHMr::deleteSpikesStdevWindow(u_star_df_fltr, 
-                                                 min_frac_records =  3/288,
-                                                 colnum = 1,
-                                                 lead_window = lead_window,
-                                                 lag_window = lag_window,
-                                                 number_sd = 8)
+# disable u_star rolling window stdev filtering 
 
-### STDEV check on rolling window NARROW ----
-
-lead_window <- list(1:10)
-lag_window <- list(-1:-10)
-
-u_star_df_fltr <- u_star_sd_spikes_rm |> 
-  filter(is.na(u_star) == F)
-
-u_star_spike_dates <- CRHMr::findSpikesStdevWindow(u_star_df_fltr, 
-                                              min_frac_records =  3/10,
-                                              colnum = 1,
-                                              lead_window = lead_window,
-                                              lag_window = lag_window,
-                                              number_sd = 7
-)
-
-# CRHMr::plotFlags(u_star_df_fltr, u_star_spike_dates, 1)
-# 
-# ggplotly()
-
-u_star_sd_spikes_rm <- CRHMr::deleteSpikesStdevWindow(u_star_df_fltr, 
-                                                 min_frac_records =  3/10,
-                                                 colnum = 1,
-                                                 lead_window = lead_window,
-                                                 lag_window = lag_window,
-                                                 number_sd = 7)
-u_star_df_fltr <- u_star_sd_spikes_rm |> 
-  filter(is.na(u_star) == F)
-
-lead_window <- list(1:5)
-lag_window <- list(-1:-5)
-
-u_star_spike_dates <- CRHMr::findSpikesStdevWindow(u_star_df_fltr, 
-                                              min_frac_records =  3/5,
-                                              colnum = 1,
-                                              lead_window = lead_window,
-                                              lag_window = lag_window,
-                                              number_sd = 10
-)
-
-# CRHMr::plotFlags(u_star_df_fltr, u_star_spike_dates, le_num)
-# 
-# ggplotly()
-
-u_star_sd_spikes_rm <- CRHMr::deleteSpikesStdevWindow(u_star_df_fltr, 
-                                                 min_frac_records =  3/5,
-                                                 colnum = 1,
-                                                 lead_window = lead_window,
-                                                 lag_window = lag_window,
-                                                 number_sd = 10)
-
-u_star_df_fltr <- u_star_sd_spikes_rm |> 
-  filter(is.na(u_star) == F)
+# u_star_sd_spikes_rm <- CRHMr::deleteSpikesStdevWindow(u_star_df_fltr, 
+#                                                  min_frac_records =  3/288,
+#                                                  colnum = 1,
+#                                                  lead_window = lead_window,
+#                                                  lag_window = lag_window,
+#                                                  number_sd = 8,
+#include_start_end = F)
 
 ### manual removal ----
 
-# ggplot(u_star_df_fltr, aes(datetime, u_star)) +
+# ggplot(u_star_df, aes(datetime, u_star)) +
 #   geom_line()
 # 
 # ggplotly()
@@ -657,6 +641,134 @@ u_star_out <- u_star_df_fltr |>
 # 
 # ggplotly()
 
+## Tau Shear Stress ----
+
+### variable specific thresholding ----
+
+tau_df <- global_var_fltrd |> 
+  select(datetime, tau = Tau) 
+
+# u_star_df |>
+#   ggplot(aes(datetime, u_star)) + geom_line()
+# 
+# plotly::ggplotly()
+
+tau_df$tau_qc <- 0
+tau_df$tau_qc <- ifelse(tau_df$tau < global_tau_min, bad_flag, tau_df$tau_qc)
+tau_df$tau_qc <- ifelse(tau_df$tau > global_tau_max, bad_flag, tau_df$tau_qc)
+
+tau_df <- wxlogR::qc_data_filter(tau_df, 'tau', 'tau_qc', bad_flag, flag)
+
+tau_df_fltr <- tau_df |>
+  filter(is.na(tau) == F) |>
+  select(datetime, tau)
+
+### spike detection ----
+
+# commented this out after trying some lax filters which still removed good data 
+
+tau_spikes_dates <- CRHMr::findSpikes(
+  tau_df_fltr,
+  colnum = 1,
+  threshold = 2,
+  spike_direction = 'both'
+)
+
+# plotFlags(tau_df_fltr, tau_spikes_dates, 1)
+# ggplotly()
+
+tau_fltr_delete <- CRHMr::deleteSpikes(
+  tau_df_fltr,
+  colnum = 1,
+  threshold = 2,
+  spike_direction = 'both'
+)
+
+tau_df_fltr <- tau_fltr_delete |>
+  filter(is.na(tau) == F)
+
+
+### STDEV check on rolling window WIDE ----
+
+lead_window <- list(1:288) # around 3 days to round out diurnal cycling
+lag_window <- list(-1:-288)
+
+tau_spike_dates <- CRHMr::findSpikesStdevWindow(tau_df_fltr, 
+                                                   min_frac_records =  3/288,
+                                                   colnum = 1,
+                                                   lead_window = lead_window,
+                                                   lag_window = lag_window,
+                                                   number_sd = 20,
+                                                include_start_end = F
+)
+
+# CRHMr::plotFlags(tau_df_fltr, tau_spike_dates, 1)
+# 
+# ggplotly()
+
+tau_sd_spikes_rm <- CRHMr::deleteSpikesStdevWindow(tau_df_fltr,
+                                                 min_frac_records =  3/288,
+                                                 colnum = 1,
+                                                 lead_window = lead_window,
+                                                 lag_window = lag_window,
+                                                 number_sd = 20,
+                                                 include_start_end = F)
+
+tau_df_fltr <- tau_sd_spikes_rm |>
+  filter(is.na(tau) == F)
+
+### STDEV check on rolling window NARROW ----
+
+lead_window <- list(1:20) 
+lag_window <- list(-1:-20)
+
+tau_spike_dates <- CRHMr::findSpikesStdevWindow(tau_df_fltr, 
+                                                min_frac_records =  3/20,
+                                                colnum = 1,
+                                                lead_window = lead_window,
+                                                lag_window = lag_window,
+                                                number_sd = 12,
+                                                include_start_end = F
+)
+
+# CRHMr::plotFlags(tau_df_fltr, tau_spike_dates, 1)
+# 
+# ggplotly()
+
+tau_sd_spikes_rm <- CRHMr::deleteSpikesStdevWindow(tau_df_fltr,
+                                                   min_frac_records =  3/288,
+                                                   colnum = 1,
+                                                   lead_window = lead_window,
+                                                   lag_window = lag_window,
+                                                   number_sd = 12,
+                                                   include_start_end = F)
+
+
+### manual removal ----
+
+# ggplot(tau_sd_spikes_rm, aes(datetime, tau)) +
+#   geom_line()
+# 
+# ggplotly()
+
+manual_spike_dates <- c(seq(from = as.POSIXct('2021-11-14 17:30', tz = 'Etc/GMT+6'), 
+                            to = as.POSIXct('2021-11-14 21:15', tz = 'Etc/GMT+6'),
+                            by = 60*30),
+                        seq(from = as.POSIXct('2021-11-28 09:15', tz = 'Etc/GMT+6'), 
+                            to = as.POSIXct('2021-11-30 07:00', tz = 'Etc/GMT+6'),
+                            by = 60*30),
+                        seq(from = as.POSIXct('2021-05-28 00:00', tz = 'Etc/GMT+6'), 
+                            to = as.POSIXct('2021-05-28 04:45', tz = 'Etc/GMT+6'),
+                            by = 60*30))
+
+tau_out <- tau_df_fltr |> 
+  filter(!datetime %in% manual_spike_dates)
+
+# ggplot(tau_df_fltr_manual, aes(datetime, tau)) +
+#   geom_line()
+# 
+# ggplotly()
+
 # create complete timeseries
 
 complete_datetime <- wxlogR::datetime_seq_full(ec_df$datetime)
@@ -666,8 +778,113 @@ complete_df <- data.frame(datetime = complete_datetime)
 ec_clean_out <- complete_df |> 
   left_join(le_out) |> 
   left_join(h_out) |> 
-  left_join(u_star_out)
+  left_join(u_star_out) |> 
+  left_join(tau_out)
   
-saveRDS(ec_clean_out, 'data/eddy_cov_cmd_15min_2021_2023_qc_rough.rds')
+saveRDS(ec_clean_out, 'data/low-tower/low_tower_15min_2021_2023_qc_rough.rds')
+
+## Wind Speed ----
+
+### variable specific thresholding ----
+
+wnd_df <- global_var_fltrd |> 
+  select(datetime, wind_speed) 
+
+mid_tree_wind <- met |> select(datetime, wind_speed = u) |> 
+  mutate(group = 'mid_tree')
+
+high_tower_wnd <- readRDS('../met-data-processing/data/waterloo_1000_ec_main.rds') |> select(datetime, wind_speed = wnd_spd) |> 
+  mutate(group = 'high_tower')
+
+# rbind(wnd_df |> mutate(group = 'low_tower'), mid_tree_wind) |>
+#   rbind(high_tower_wnd) |> 
+#   ggplot(aes(datetime, wind_speed, colour = group)) + geom_line()
+# 
+# plotly::ggplotly()
+
+### spike detection ----
+
+# commented this out after trying some lax filters which still removed good data 
+
+wnd_df_fltr <- wnd_df |>
+  filter(is.na(wind_speed) == F)
+
+wnd_spikes_dates <- CRHMr::findSpikes(
+  wnd_df_fltr,
+  colnum = 1,
+  threshold = 2,
+  spike_direction = 'hi'
+)
+
+# plotFlags(wnd_df_fltr, wnd_spikes_dates, 1)
+# ggplotly()
+
+wnd_fltr_delete <- CRHMr::deleteSpikes(
+  wnd_df_fltr,
+  colnum = 1,
+  threshold = 2,
+  spike_direction = 'hi'
+)
+
+wnd_df_fltr <- wnd_fltr_delete |>
+  filter(is.na(wind_speed) == F)
+
+### find flatlines ----
+
+flatlines <- findFlatLines(wnd_df_fltr, 1, window_size = 4, 
+                           logfile = 'logs/CRHMr_low_ec_wind_flats.log')
+
+
+### manual removal ----
+# 
+# ggplot(tau_sd_spikes_rm, aes(datetime, tau)) +
+#   geom_line()
+# 
+# ggplotly()
+
+manual_spike_dates <- c(seq(from = as.POSIXct('2022-03-04 16:00', tz = 'Etc/GMT+6'), 
+                            to = as.POSIXct('2022-03-09 12:15', tz = 'Etc/GMT+6'),
+                            by = 60*15))
+
+wnd_out <- wnd_df_fltr |> 
+  filter(!datetime %in% manual_spike_dates)
+
+# ggplot(wnd_out, aes(datetime, wind_speed)) +
+#   geom_line()
+# 
+# ggplotly()
+
+## wind direction ---- 
+
+wnd_dir_df <- global_var_fltrd |> 
+  select(datetime, wind_dir_mag) |> 
+  left_join(wnd_out)
+
+wnd_dir_out <- wnd_dir_df |> 
+  mutate(wind_dir_mag = case_when(
+    is.na(wind_speed) == T ~ NA,
+    TRUE ~ wind_dir_mag
+  )) |> 
+  select(datetime, wind_dir_mag)
+
+sum(is.na(wnd_dir_out$wind_speed))
+sum(is.na(wnd_dir_out$wind_dir_mag))
+
+# create complete timeseries
+
+complete_datetime <- wxlogR::datetime_seq_full(ec_df$datetime)
+
+complete_df <- data.frame(datetime = complete_datetime)
+
+ec_clean_out <- complete_df |> 
+  left_join(le_out) |> 
+  left_join(h_out) |> 
+  left_join(u_star_out) |> 
+  left_join(tau_out) |> 
+  left_join(wnd_out) |> 
+  left_join(wnd_dir_out)
+
+saveRDS(ec_clean_out, 'data/low-tower/low_tower_15min_2021_2023_qc_rough.rds')
+
 
 

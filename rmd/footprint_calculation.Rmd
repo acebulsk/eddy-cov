@@ -12,11 +12,23 @@ library(tidyverse)
 library(weatherdash)
 ```
 
+:::{.callout-important}
+## Note:
+Some constants are calculated in the eddy_pro_params.qmd file.
+:::
+
 TODO:
 
 - lower EC was raised winter 2022 need to fix in QAQC before applying across all dates
 - instrument height changes relative to snow calculate using SR50 data? 
-- what is the difference in  "horiz_wind_spd" & "result_wind_spd"
+- footprint in adams script Klujn footprinting method (https://footprint.kljun.net/)
+Two Scripts (R; Python; Matlab):
+calc_footprint_FFP (calculates footprint for each half-hour (or timestep))
+Gets distances from which you can filter out the fluxes (we use distance away from tower at the 80% flux for [N, NE, E, SE, S, SW, W, NW])
+To estimate distances available for us we just use measuring on google earth.
+calc_footprint_FFP_climatology (computes area graphs)
+After filtering out the fluxes, use the subset in this to get the images of the flux footprints for creating maps.
+Any real subset (recommend that it is filtered first) can be put into here so its pretty flexible (Time of year or something)
 
 ## Formulas
 
@@ -25,6 +37,7 @@ Calculate the upwind area aka footprint ($X_f$, m) representative of these measu
 $$
 X_f = - \frac{1}{ln(f)}\frac{U}{u^*}\frac{z-d}{k}
 $$ 
+
 Friction velocity ($u_*$) can be modelled as in wind_profile.Rmd or is also measured at the Eddy Covariance Sites. 
 
 ## find the parameters $u^{∗}$, $Z_{0m}$, and $d_0$ of the logarithmic wind profile equation that best matches the measured data provided below:
@@ -32,77 +45,82 @@ Friction velocity ($u_*$) can be modelled as in wind_profile.Rmd or is also meas
 Constants:
 
 ```{r}
-# need to measure this in the field still (2022-06-01)
-temp_offset <- 125
+high_tower_ec_height <- 15 # m TODO should this change with snowpack?
+low_tower_ec_height <- c(2,3) # Feb 17, 2022 Tower raised at 5 pm Feb 17 (MST) aka 6 pm CDT / MDT
+low_tower_raised_dt <- as.POSIXct('2022-02-17 18:00:00', tz = 'Etc/GMT+6')
+
+ec_dir_offset_mag <- 124 # offset to add to get to true north datum
+calg_declination <- 13.5 # deg. west declination to convert magnetic direction to true north by adding this
 
 k <- 0.4 # von karmans constant (unitless) 
 
-d0 <- 1.965869 # m estimated from jan 16 2022 at 4:00 pm 
-f <- 0.8 # 80%
+tree_heights <- readRDS('../lidar/data/22_243_FT_ttops_5m_norm.rds')
+mean_height <- mean(tree_heights$Z)
+
+f <- 0.85 # If you wish to know the length scale of the footprint where 85% of the flux is originating from, then f=0.85
+
+# displacement height found using iterative method from estimate_roughness_displacement.rds
+
+low_d_0 <- readRDS('data/event_average_z_0m_d0_low_tower.rds')$event_d_0
+high_d_0 <- readRDS('data/event_average_z_0m_d0_high_tower.rds')$event_d_0
+
+d_0_est_t_height <- (2/3)*mean_height
 
 ```
 
 Load Data: 
 
 ```{r}
-low_wind <- readRDS('data/eddy_cov_15min_combined.rds') |> select(TIMESTAMP, wnd_dir_compass, u_star, low_ec_rslt_wnd_spd = result_wind_spd)# |> 
-#   pivot_longer(u_star:low_ec_rslt_wnd_spd)
-# 
-# ggplot(low_wind, aes(TIMESTAMP, value, colour = name)) + geom_line()
-# 
-# plotly::ggplotly()
 
-mid_hi_wind <- readRDS('../../analysis/treefort-main/data/met/met_main.rds') |> select(TIMESTAMP, USWindSpeed_S_WVT, top_ec_rlst_wnd_spd, top_ec_u_star)
+ffr_snow_depth <- readRDS('../met-data-processing/data/ffr_met_main_qaqc.rds') |> 
+  select(datetime, SnowDepth) |> 
+  mutate(SnowDepthFill = imputeTS::na_interpolation(SnowDepth, maxgap = 4*6))
 
-wind_wide <- left_join(low_wind, mid_hi_wind, by = 'TIMESTAMP')
+low_wind <- readRDS('data/low-tower/low_tower_15min_2021_2023_qc_rough.rds') |> select(datetime, wnd_dir_compass = wind_dir_mag, u_star, wind = wind_speed) |> 
+  mutate(wind_dir = (wnd_dir_compass + ec_dir_offset_mag) %% 360,
+         inst_height = case_when(
+           datetime < low_tower_raised_dt ~ 2,
+           datetime >= low_tower_raised_dt ~ 3
+         )) |> 
+  select(-wnd_dir_compass)
 
-wind_dir <- wind_wide |> 
-  mutate(wind_dir = (wnd_dir_compass + temp_offset) %% 365) |> 
-  select(TIMESTAMP, wind_dir) 
+mid_wind <- readRDS('../../analysis/met-data-processing/data/ffr_met_main.rds') |> select(datetime, US_WindSpeed_avg) 
 
-low <- wind_wide |> 
-  select(TIMESTAMP, u_star, wind_speed = low_ec_rslt_wnd_spd) |> 
-  mutate(inst_height = 3) |> 
-  mutate(
-    med = zoo::rollapply(wind_speed, width = 1000, FUN = median, na.rm = T, align = 'center', partial = T),
-    sd = zoo::rollapply(wind_speed, width = 1000, FUN = sd, na.rm = T, align = 'center', partial = T),
-    stdep = (wind_speed - med) / sd,
-    flag = ifelse(wind_speed > 4, T, F)
-  ) |> 
-    select(TIMESTAMP, u_star, wind_speed, inst_height, flag) 
+hi_wind <- readRDS('data/high-tower/ec_high_tower_30_min_2021_2023_qc_rough.rds') |> select(datetime, wnd_dir_compass = wind_dir_mag, u_star, wind = wind_speed) |> 
+  mutate(wind_dir = wnd_dir_compass + calg_declination,
+         inst_height = 15) |> 
+  select(-wnd_dir_compass)
 
-
-ggplot(low, aes(TIMESTAMP, wind_speed, colour = flag)) + geom_point()
-
-plotly::ggplotly()
-
-hi <- wind_wide |> 
-  select(TIMESTAMP, u_star = top_ec_u_star, wind_speed = top_ec_rlst_wnd_spd) |> 
-  mutate(
-    inst_height = 13.5,
-    mean = zoo::rollapply(wind_speed, width = 48, FUN = mean, na.rm = T, align = 'center', partial = T),
-    sd = zoo::rollapply(wind_speed, width = 48, FUN = sd, na.rm = T, align = 'center', partial = T),
-    stdep = (wind_speed - mean) / sd,
-    flag = ifelse(wind_speed > 20, T, F)
-  ) |> 
-  select(TIMESTAMP, u_star, wind_speed, inst_height, flag) 
-
-ggplot(hi, aes(TIMESTAMP, wind_speed, colour = flag)) + geom_point()
-plotly::ggplotly()
-
-
-all <- rbind(low, hi) |> 
-  left_join(wind_dir) |> 
-  filter(flag == F)
+all <- rbind(low_wind, hi_wind)
 
 all <- weatherdash::cat_wind(all, 'wind_dir', 'wind_dir_bin')
 
-ggplot(all, aes(TIMESTAMP, wind_speed, colour = flag)) + 
-  geom_point() +
-  facet_wrap(~inst_height)
-plotly::ggplotly()
+# ggplot(all, aes(datetime, wind)) + 
+#   geom_point() +
+#   facet_wrap(~inst_height)
+# plotly::ggplotly()
   
-#|> filter(as.Date(TIMESTAMP) == as.Date('2022-01-16')) 
+#|> filter(as.Date(datetime) == as.Date('2022-01-16')) 
+
+to_long_dates <- function(from, to, storm_id){
+  date <- seq(from, to, 'day')
+  
+  out <- data.frame(date, storm_id)
+  
+  return(out)
+}
+
+# good EC periods where the upper and lower systems are producing data
+# the lower ec system was checked prior to the start of each period
+
+good_ec_star_end <- read.csv('data/clean_ec_events.csv') |> 
+  mutate(
+    from = as.Date(from, tz = 'Etc/GMT+6'),
+    to = as.Date(to, tz = 'Etc/GMT+6'),
+    storm_id = from)
+
+good_ec_periods <-
+  purrr::pmap_dfr(good_ec_star_end |> select(c(from, to, storm_id)), to_long_dates)
 
 ```
 
@@ -110,7 +128,7 @@ Calculate $X_f$:
 
 ```{r}
 x_f <- all |> 
-  mutate(x_f = -(1/log(f))*(wind_speed/u_star)*((inst_height-d0)/k)) |> 
+  mutate(x_f = -(1/log(f))*(wind/u_star)*((inst_height-low_d_0)/k)) |> 
   filter(x_f < 5000)
 
 ```
@@ -119,35 +137,47 @@ Plot $X_f$ for 3m EC with wind speed on all days:
 NOTE EC WAS RAISED Feb 17, 2022, this could be why relationship changes after FEB plot.
 
 ```{r}
-ggplot(x_f |> filter(inst_height == 3), aes(wind_speed, x_f, colour = wind_dir_bin)) +
+ggplot(x_f |> filter(inst_height == 3), aes(wind, x_f, colour = wind_dir_bin)) +
   geom_point() +
-  facet_wrap(~inst_height+strftime(as.Date(TIMESTAMP), "%m"))
+  facet_wrap(~strftime(as.Date(datetime), "%m"))
 ```
 
-Plot $X_f$ for 13.5 m EC with wind speed on all days: 
+```{r}
+ggplot(x_f |> filter(inst_height == 3), aes(wind, x_f, colour = strftime(as.Date(datetime), "%m"))) +
+  geom_point() +
+  facet_wrap(~wind_dir_bin)
+```
+
+Plot $X_f$ for 15 m EC with wind speed on all days: 
 
 Maybe larger footprint during winter months when snow is in the trees? 
 
 ```{r}
-ggplot(x_f |> filter(inst_height == 13.5), aes(wind_speed, x_f, colour = wind_dir_bin)) +
+ggplot(x_f |> filter(inst_height == 15), aes(wind, x_f, colour = wind_dir_bin)) +
   geom_point() +
-  facet_wrap(~inst_height+strftime(as.Date(TIMESTAMP), "%m"), scales = 'free')
-
-plotly::ggplotly()
-
+  facet_wrap(~strftime(as.Date(datetime), "%m"), scales = 'free')
+```
+```{r}
+ggplot(x_f |> filter(inst_height == 15), aes(wind, x_f, colour = strftime(as.Date(datetime), "%m"))) +
+  geom_point() +
+  facet_wrap(~wind_dir_bin)
 ```
 
 Output $X_f$ table
 
 ```{r}
-x_f |> 
-  mutate(yr_mon =  strftime(as.Date(TIMESTAMP), "%y-%m")) |> 
+x_f_summary <- x_f |> 
+  mutate(yr_mon =  strftime(as.Date(datetime), "%y-%m")) |> 
   group_by(inst_height, yr_mon) |> 
   summarise(x_f_mean = mean(x_f, na.rm = T),
             u_star_mean = mean(u_star, na.rm = T),
-            wind_spd_mean = mean(wind_speed, na.rm = T),
-            wind_spd_pk_mean = max(wind_speed, na.rm = T),
+            wind_spd_mean = mean(wind, na.rm = T),
+            wind_spd_pk_mean = max(wind, na.rm = T),
             wind_dir_mean = mean(wind_dir, na.rm = T))
+x_f_summary
+
+write.csv(x_f_summary, 'data/ec_footprint_summary.csv')
+
 ```
 
 
@@ -157,12 +187,12 @@ Wind Rose for all months for each instrument height:
 # for (i in c(3,13.5)) {
 #   for (m in 1:12) {
 #     fltr <- all |> 
-#       mutate(month = as.numeric(strftime(as.Date(TIMESTAMP), "%m"))) |> 
+#       mutate(month = as.numeric(strftime(as.Date(datetime), "%m"))) |> 
 #       filter(inst_height == i,
 #              month == m)
 #     
 #   if(nrow(fltr) != 0){
-#     p <- weatherdash::wind_rose(fltr, 'TIMESTAMP', 'wind_speed', 'wind_dir', plot_title = paste('Height', i, "m", 'for', m))
+#     p <- weatherdash::wind_rose(fltr, 'datetime', 'wind', 'wind_dir', plot_title = paste('Height', i, "m", 'for', m))
 #     file1 <- paste0('figs/wind_rose/wind_rose_height_', i, '_', m,'.html')
 #     file2 <- paste0('figs/wind_rose/wind_rose_height_', i, '_', m,'.png')
 # 
@@ -178,7 +208,7 @@ Wind Rose for all months for each instrument height:
 Look at one of the windiest days without snow on instruments:
 
 ```{r}
-ggplot(x_f |> filter(as.Date(TIMESTAMP) == as.Date('2022-01-16')) , aes(wind_speed, x_f)) +
+ggplot(x_f |> filter(as.Date(datetime) == as.Date('2022-01-16')) , aes(wind, x_f)) +
   geom_point() +
   facet_wrap(~inst_height, scales = 'free')
 ```
@@ -187,24 +217,9 @@ Wind Rose on this Day:
 
 ```{r}
 
-
-low_wind <- readRDS('data/eddy_cov_15min_combined.rds') |> 
-  filter(as.Date(TIMESTAMP) == as.Date('2022-01-16')) |> 
-  select(TIMESTAMP, 
-         wnd_dir_compass, 
-         u_star, 
-         low_ec_rslt_wnd_spd = result_wind_spd) |>
-  mutate(
-    wind_dir = (wnd_dir_compass + temp_offset) %% 365,
-    mean = zoo::rollapply(low_ec_rslt_wnd_spd, width = 48, FUN = mean, na.rm = T, align = 'center', partial = T),
-    sd = zoo::rollapply(low_ec_rslt_wnd_spd, width = 48, FUN = sd, na.rm = T, align = 'center', partial = T),
-    stdep = (low_ec_rslt_wnd_spd - mean) / sd,
-    flag = ifelse(low_ec_rslt_wnd_spd > 4, T, F)
-  ) 
-
-ggplot(low_wind, aes(TIMESTAMP, low_ec_rslt_wnd_spd, colour = flag)) + 
+ggplot(low_wind, aes(datetime, wind)) + 
   geom_point() 
 
-weatherdash::wind_rose(low_wind, 'TIMESTAMP', 'low_ec_rslt_wnd_spd', 'wind_dir', plot_title = 'test')
+weatherdash::wind_rose(low_wind, 'datetime', 'wind', 'wind_dir', plot_title = 'test')
 ```
 

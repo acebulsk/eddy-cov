@@ -3,6 +3,8 @@ title: "Investigate Roughness Length and Displacement Height at Fortrest Forest 
 author: "Cebulski, A.C"
 date: "`r Sys.Date()`"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -19,19 +21,54 @@ Purpose: Since friction velocity is measured using the EC system we can use that
 Workflow: Need to calculate initial displacement height and roughness length before can adjust instrument height to reflect height change from 230 to 295 cm on feb 2022, and can also adjust height to reflect snow depth changes. 
 
 ```{r data, echo=FALSE}
-low_wind <- readRDS('data/eddy_cov_15min_combined.rds') |> 
-  select(TIMESTAMP, low_ec_u_star = u_star, low_ec_rslt_wnd_spd = result_wind_spd) |>
+
+ffr_snow_depth <- readRDS('../met-data-processing/data/ffr_t_u_sd_qaqc_shortfill.rds') |> 
+  select(datetime, SnowDepth) |> 
+  mutate(SnowDepth = imputeTS::na_interpolation(SnowDepth, maxgap = Inf)) # fill all with linear
+
+low_wind <- readRDS('data/low-tower/low_tower_15min_2021_2023_qc_rough.rds') |> 
+  select(datetime, low_ec_u_star = u_star, low_ec_rslt_wnd_spd = wind_speed) |>
+  left_join(ffr_snow_depth) |> 
   mutate(
     low_ec_height = ifelse(
-      TIMESTAMP >= as.POSIXct('2022-02-17 18:00:00', tz = 'Etc/GMT+6'),
+      datetime >= as.POSIXct('2022-02-17 18:00:00', tz = 'Etc/GMT+6'),
       3,
       2),
+    # tried to add snow depth here but this broke the optim_wind function as the z height got too small.. probably fine to not consider snow depth since the d_0 and z_0 for the low and high tower end up very similar anyway
+      # low_ec_height = low_ec_height - SnowDepth
     # low_ec_height = 2
-    )
+    ) |> 
+  filter(is.na(low_ec_height) == F)
 
-hi_wind <- readRDS('../met-data-processing/data/met_main.rds') |> select(TIMESTAMP = datetime, top_ec_wnd_spd, top_ec_u_star)
+hi_wind <- readRDS('data/high-tower/ec_high_tower_30_min_2021_2023_qc_rough.rds') |> select(datetime, u_star = u_star, wind_speed = wind_speed) |> 
+  left_join(ffr_snow_depth) |> 
+  mutate(inst_height = 15,
+      # inst_height = inst_height - SnowDepth,
+      )|> 
+  filter(is.na(inst_height) == F)
 
-wind_wide <- left_join(low_wind, hi_wind, by = 'TIMESTAMP')
+wind_wide <- left_join(low_wind, hi_wind, by = 'datetime')
+
+to_long_dates <- function(from, to, storm_id){
+  date <- seq(from, to, 'day')
+  
+  out <- data.frame(date, storm_id)
+  
+  return(out)
+}
+
+# good EC periods where the upper and lower systems are producing data
+# the lower ec system was checked prior to the start of each period
+
+good_ec_star_end <- read.csv('data/clean_ec_events.csv') |> 
+  mutate(
+    from = as.Date(from, tz = 'Etc/GMT+6'),
+    to = as.Date(to, tz = 'Etc/GMT+6'),
+    storm_id = from)
+
+good_ec_periods <-
+  purrr::pmap_dfr(good_ec_star_end |> select(c(from, to, storm_id)), to_long_dates)
+
 
 ```
 
@@ -45,50 +82,45 @@ $$
 
 ```{r low, echo=TRUE}
 # create df of the params we need to run the optimizer function to find d_0 and z_0
-pars <- low_wind |> 
-  select(
-    uMeas = low_ec_rslt_wnd_spd,
-    zHeight = low_ec_height,
-    u_star = low_ec_u_star)
-
-# returns df of optimized, wind params ustar is redundant here since we supplied the measured values
+# pars <- low_wind |>
+#   select(
+#     uMeas = low_ec_rslt_wnd_spd,
+#     zHeight = low_ec_height,
+#     u_star = low_ec_u_star)
+# 
+# # returns df of optimized, wind params ustar is redundant here since we supplied the measured values
+# 
 # d_0 <- pmap_df(pars, trbtransfeR::optim_wind_params)
+
 # saveRDS(d_0, 'data/ffr_optim_wind_param_ec_low.rds')
 # saveRDS(d_0, 'data/ffr_optim_wind_param_ec_transition_2_3.rds')
 
-d_0 <- readRDS('data/testing/ffr_optim_wind_param_ec_transition_2_3.rds')
+d_0 <- readRDS('data/ffr_optim_wind_param_ec_transition_2_3.rds')
 
 low_wind <- cbind(low_wind, d_0[,2:3])
 ```
 
 ```{r, echo=FALSE}
-mean_z_0_2m <- mean(low_wind$z_0m[low_wind$low_ec_height == 2], na.rm = T)
-mean_d_0_2m <- mean(low_wind$d_0[low_wind$low_ec_height == 2], na.rm = T)
+mean_z_0 <- mean(low_wind$z_0m, na.rm = T)
+mean_d_0 <- mean(low_wind$d_0, na.rm = T)
 
-mean_z_0_3m <- mean(low_wind$z_0m[low_wind$low_ec_height == 3], na.rm = T)
-mean_d_0_3m <- mean(low_wind$d_0[low_wind$low_ec_height == 3], na.rm = T)
+pars_out <- data.frame(tower = c('low', 'low'),
+                       par = c('z_0m', 'd_0'),
+                       value = c(mean_z_0, mean_d_0))
 
-pars_out <- data.frame(height = c(2,2,3,3),
-                       par = c('z_0m', 'd_0', 'd_0', 'z_0m'),
-                       value = c(mean_z_0_2m, mean_d_0_2m, mean_z_0_3m, mean_d_0_3m))
-
-saveRDS(pars_out, 'data/average_z_0m_d0_2m_3m.rds')
+saveRDS(pars_out, 'data/average_z_0m_d0.rds')
 ```
 
 After running the optimizer function for each observation, then taking the intstrument height average:
 
-**The 2 m mean roughness length is: ** `r mean_z_0_2m`
+**The 2 m mean roughness length is: ** `r mean_z_0`
 
-**The 2 m mean displacement height is: ** `r mean_d_0_2m`
-
-**The 3 m mean roughness length is: ** `r mean_z_0_3m`
-
-**The 3 m mean displacement height is: ** `r mean_d_0_3m`
+**The 2 m mean displacement height is: ** `r mean_d_0`
 
 ## Plot roughness length and displacement height over time
 
 ```{r}
-ggplot(low_wind, aes(TIMESTAMP, z_0m)) +geom_point(size = 0.5)
+ggplot(low_wind, aes(datetime, z_0m)) +geom_point(size = 0.5)
 
 ggplot(low_wind, aes(low_ec_rslt_wnd_spd, z_0m)) +
   geom_point(size = 0.5) +
@@ -100,68 +132,57 @@ ggplot(low_wind, aes(low_ec_rslt_wnd_spd, z_0m)) +
 
 ```{r}
 low_wind_fltr <- low_wind |>
-    mutate(
-    storm = 
-      case_when(
-        between(TIMESTAMP, 
-                as.POSIXct('2021-12-23 00:00:00', tz = 'Etc/GMT+6'), 
-                as.POSIXct('2021-12-27 00:00:00', tz = 'Etc/GMT+6')) ~ 'dec23-dec27',
-        # tree emptied by wind on jan 2 am. unloading starts pm jan 5, looks like pluvio was snow capped
-        # between(TIMESTAMP, 
-        #         as.POSIXct('2022-01-02 05:00:00', tz = 'Etc/GMT+6'), 
-        #         as.POSIXct('2022-01-05 07:00:00', tz = 'Etc/GMT+6')) ~ 'jan2-jan5',
-        between(TIMESTAMP, 
-                as.POSIXct('2022-01-17 10:00:00', tz = 'Etc/GMT+6'), 
-                as.POSIXct('2022-01-18 10:00:00', tz = 'Etc/GMT+6')) ~ 'jan17-jan18',
-        between(TIMESTAMP, 
-                as.POSIXct('2022-02-19 10:00:00', tz = 'Etc/GMT+6'), 
-                as.POSIXct('2022-02-20 10:00:00', tz = 'Etc/GMT+6')) ~ 'feb19-feb20',
-        # smaller storm with what appears to be sublimation starting at 10 am mar 24
-        between(TIMESTAMP, 
-                as.POSIXct('2022-03-24 00:00:00', tz = 'Etc/GMT+6'), 
-                as.POSIXct('2022-03-24 09:45:00', tz = 'Etc/GMT+6')) ~ 'mar24',
-        # wind speed picks up at 6 pm on the 4th 
-        between(TIMESTAMP, 
-                as.POSIXct('2022-04-04 00:00:00', tz = 'Etc/GMT+6'), 
-                as.POSIXct('2022-04-04 18:00:00', tz = 'Etc/GMT+6')) ~ 'apr4'
-      )
-  ) |> 
-  filter(is.na(storm) == F)
-low_wind_fltr$storm <- ordered(low_wind_fltr$storm, c('dec23-dec27', 'jan17-jan18', 'feb19-feb20', 'mar24', 'apr4'))
+  mutate(date = as.Date(datetime, tz = 'Etc/GMT+6')) |> 
+  left_join(good_ec_periods) |> 
+  filter(is.na(storm_id) == F)
 
 ```
 
 ## Plot on select storms
 
 ```{r, fig.height=10}
-ggplot(low_wind_fltr, aes(TIMESTAMP, z_0m)) + 
+ggplot(low_wind_fltr, aes(datetime, z_0m)) + 
   geom_point() +
-  facet_wrap(~storm, scales = 'free_x', nrow = 5)
+  facet_wrap(~storm_id, scales = 'free_x', nrow = 5)
 
 ggplot(low_wind_fltr, aes(low_ec_rslt_wnd_spd, z_0m)) +geom_point()
 
 mean_z_0 <- mean(low_wind_fltr$z_0m, na.rm = T)
 
-
 ```
 
 **The mean 2m roughness length of all storm events is: ** `r mean_z_0`
 
+```{r}
+ggplot(low_wind_fltr, aes(datetime, d_0)) + 
+  geom_point() +
+  facet_wrap(~storm_id, scales = 'free_x', nrow = 5)
 
-# Calculate the roughness length and displacement height at 13.5 m
+ggplot(low_wind_fltr, aes(low_ec_rslt_wnd_spd, d_0)) +geom_point()
+
+mean_d_0 <- mean(low_wind_fltr$d_0, na.rm = T)
+
+df_event_pars <- list(event_z_0 = mean_z_0,
+                      event_d_0 = mean_d_0)
+
+saveRDS(df_event_pars, 'data/event_average_z_0m_d0_low_tower.rds')
+```
+
+**The mean 2m displacement height of all storm events is: ** `r mean_d_0`
+
+# Calculate the roughness length and displacement height at 15 m
 
 ```{r hi}
 # create df of the params we need to run the optimizer function to find d_0 and z_0
-pars <- hi_wind |> 
-  mutate(inst_height = 13.5) |> 
-  select(
-    uMeas = top_ec_rlst_wnd_spd,
-    zHeight = inst_height,
-    u_star = top_ec_u_star)
+# pars <- hi_wind |> 
+#   select(
+#     uMeas = wind_speed,
+#     zHeight = inst_height,
+#     u_star = u_star)
 
 # returns df of optimized, wind params ustar is redundant here since we supplied the measured values
 # d_0 <- pmap_df(pars, trbtransfeR::optim_wind_params)
-# 
+# # 
 # saveRDS(d_0, 'data/ffr_optim_wind_param_ec_hi.rds')
 
 d_0 <- readRDS('data/ffr_optim_wind_param_ec_hi.rds')
@@ -174,14 +195,14 @@ mean_z_0 <- mean(d_0$z_0m, na.rm = T)
 mean_d_0 <- mean(d_0$d_0, na.rm = T)
 ```
 
-**The 13.5 m mean roughness length is: ** `r mean_z_0`
+**The 15 m mean roughness length is: ** `r mean_z_0`
 
-**The 13.5 m mean displacement height is: ** `r mean_d_0`
+**The 15 m mean displacement height is: ** `r mean_d_0`
 
 ## Plot roughness length and displacement height over time
 
 ```{r}
-ggplot(hi_wind, aes(TIMESTAMP, z_0m)) +geom_point()
+ggplot(hi_wind, aes(datetime, z_0m)) +geom_point()
 
 ```
 
@@ -189,48 +210,40 @@ ggplot(hi_wind, aes(TIMESTAMP, z_0m)) +geom_point()
 
 ```{r}
 hi_wind_fltr <- hi_wind |>
-    mutate(
-    storm = 
-      case_when(
-        between(TIMESTAMP, 
-                as.POSIXct('2021-12-23 00:00:00', tz = 'Etc/GMT+6'), 
-                as.POSIXct('2021-12-27 00:00:00', tz = 'Etc/GMT+6')) ~ 'dec23-dec27',
-        # tree emptied by wind on jan 2 am. unloading starts pm jan 5, looks like pluvio was snow capped
-        # between(TIMESTAMP, 
-        #         as.POSIXct('2022-01-02 05:00:00', tz = 'Etc/GMT+6'), 
-        #         as.POSIXct('2022-01-05 07:00:00', tz = 'Etc/GMT+6')) ~ 'jan2-jan5',
-        between(TIMESTAMP, 
-                as.POSIXct('2022-01-17 10:00:00', tz = 'Etc/GMT+6'), 
-                as.POSIXct('2022-01-18 10:00:00', tz = 'Etc/GMT+6')) ~ 'jan17-jan18',
-        between(TIMESTAMP, 
-                as.POSIXct('2022-02-19 10:00:00', tz = 'Etc/GMT+6'), 
-                as.POSIXct('2022-02-20 10:00:00', tz = 'Etc/GMT+6')) ~ 'feb19-feb20',
-        # smaller storm with what appears to be sublimation starting at 10 am mar 24
-        between(TIMESTAMP, 
-                as.POSIXct('2022-03-24 00:00:00', tz = 'Etc/GMT+6'), 
-                as.POSIXct('2022-03-24 09:45:00', tz = 'Etc/GMT+6')) ~ 'mar24',
-        # wind speed picks up at 6 pm on the 4th 
-        between(TIMESTAMP, 
-                as.POSIXct('2022-04-04 00:00:00', tz = 'Etc/GMT+6'), 
-                as.POSIXct('2022-04-04 18:00:00', tz = 'Etc/GMT+6')) ~ 'apr4'
-      )
-  ) |> 
-  filter(is.na(storm) == F)
-hi_wind_fltr$storm <- ordered(hi_wind_fltr$storm, c('dec23-dec27', 'jan17-jan18', 'feb19-feb20', 'mar24', 'apr4'))
+  mutate(date = as.Date(datetime, tz = 'Etc/GMT+6')) |> 
+  left_join(good_ec_periods) |> 
+  filter(is.na(storm_id) == F)
 
 ```
 
 ## Plot on select storms
 
 ```{r}
-ggplot(hi_wind_fltr, aes(TIMESTAMP, z_0m)) + 
+ggplot(hi_wind_fltr, aes(datetime, z_0m)) + 
   geom_point() +
-  facet_wrap(~storm, scales = 'free_x', nrow = 5)
+  facet_wrap(~storm_id, scales = 'free_x', nrow = 5)
 
-ggplot(hi_wind_fltr, aes(top_ec_rlst_wnd_spd, z_0m)) +geom_point()
+ggplot(hi_wind_fltr, aes(wind_speed, z_0m)) +geom_point()
 
 mean_z_0 <- mean(hi_wind_fltr$z_0m, na.rm = T)
 
 ```
 
-**The mean 13 m roughness length of all storm events is: ** `r mean_z_0`
+**The mean 15 m roughness length of all storm events is: ** `r mean_z_0`
+
+```{r}
+ggplot(hi_wind_fltr, aes(datetime, d_0)) + 
+  geom_point() +
+  facet_wrap(~storm_id, scales = 'free_x', nrow = 5)
+
+ggplot(hi_wind_fltr, aes(wind_speed, d_0)) +geom_point()
+
+mean_d_0 <- mean(hi_wind_fltr$d_0, na.rm = T)
+
+df_event_pars <- list(event_z_0 = mean_z_0,
+                      event_d_0 = mean_d_0)
+
+saveRDS(df_event_pars, 'data/event_average_z_0m_d0_high_tower.rds')
+```
+
+**The mean 15 m displacement height of all storm events is: ** `r mean_d_0`

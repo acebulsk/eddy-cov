@@ -92,10 +92,10 @@ ec_fltr_th <- ec_fltr_long |>
   select(c(datetime, all_of(qc_vars))) |> 
   as.data.frame()
 
-ggplot(ec_fltr_long, aes(datetime, value)) +
-  geom_line() +
-  facet_grid(vars(name),
-             scales = 'free')
+# ggplot(ec_fltr_long, aes(datetime, value)) +
+#   geom_line() +
+#   facet_grid(vars(name),
+#              scales = 'free')
 
 # Wet Lens Filtering ---- 
 
@@ -201,8 +201,8 @@ global_var_fltrd$le_qc <- ifelse(global_var_fltrd$LE < global_le_min, 2, 0)
 
 global_var_fltrd <- wxlogR::qc_data_filter(global_var_fltrd, 'LE', 'le_qc', bad_flag, flag)
 
-global_var_fltrd |>
-  ggplot(aes(datetime, LE)) + geom_line()
+# global_var_fltrd |>
+#   ggplot(aes(datetime, LE)) + geom_line()
 
 # plotly::ggplotly()
 
@@ -221,8 +221,8 @@ le_spikes_dates <- CRHMr::findSpikes(
   spike_direction = 'hi'
 )
 
-plotFlags(le_fltr, le_spikes_dates, 1)
-ggplotly()
+# plotFlags(le_fltr, le_spikes_dates, 1)
+# ggplotly()
 
 le_fltr_delete <- CRHMr::deleteSpikes(
   le_fltr,
@@ -243,7 +243,7 @@ le_spikes_dates <- CRHMr::findSpikes(
   spike_direction = 'hi'
 )
 
-plotFlags(le_fltr, le_spikes_dates, 1)
+# plotFlags(le_fltr, le_spikes_dates, 1)
 # ggplotly()
 
 le_fltr_delete <- CRHMr::deleteSpikes(
@@ -265,7 +265,7 @@ le_spikes_dates <- CRHMr::findSpikes(
   spike_direction = 'hi'
 )
 
-plotFlags(le_fltr, le_spikes_dates, 1)
+# plotFlags(le_fltr, le_spikes_dates, 1)
 # ggplotly()
 
 le_fltr_delete <- CRHMr::deleteSpikes(
@@ -318,8 +318,8 @@ le_sd_spikes_rm <- CRHMr::deleteSpikesStdevWindow(le_fltr,
                                                   number_sd = 10,
                                                   include_start_end = F)
 
-ggplot(le_sd_spikes_rm, aes(datetime, LE)) +
-  geom_line()
+# ggplot(le_sd_spikes_rm, aes(datetime, LE)) +
+#   geom_line()
 # 
 # ggplotly()
 
@@ -412,8 +412,8 @@ bad_times <- c(
   
 le_out <- le_sd_spikes_nonan |> filter(!datetime %in% bad_times)
 
-ggplot(le_out, aes(datetime, LE)) +
-  geom_line()
+# ggplot(le_out, aes(datetime, LE)) +
+#   geom_line()
 
 # ggplotly()
 
@@ -437,8 +437,8 @@ h_df_fltr <- h_df |>
   filter(is.na(H) == F) |>
   select(datetime, H)
 
-h_df_fltr |>
-  ggplot(aes(datetime, H)) + geom_line()
+# h_df_fltr |>
+#   ggplot(aes(datetime, H)) + geom_line()
 
 # plotly::ggplotly()
 
@@ -452,7 +452,7 @@ h_spikes_dates <- CRHMr::findSpikes(
   spike_direction = 'hi'
 )
 
-plotFlags(h_df_fltr, h_spikes_dates, 1)
+# plotFlags(h_df_fltr, h_spikes_dates, 1)
 # ggplotly()
 
 h_df_fltr <- CRHMr::deleteSpikes(
@@ -474,7 +474,7 @@ h_spikes_dates <- CRHMr::findSpikes(
   spike_direction = 'hi'
 )
 
-plotFlags(h_df_fltr, h_spikes_dates, 1)
+# plotFlags(h_df_fltr, h_spikes_dates, 1)
 # ggplotly()
 
 h_df_fltr <- CRHMr::deleteSpikes(
@@ -503,7 +503,7 @@ h_spike_dates <- CRHMr::findSpikesStdevWindow(h_df_fltr,
                                               include_start_end = F
 )
 
-CRHMr::plotFlags(h_df_fltr, h_spike_dates, 1)
+# CRHMr::plotFlags(h_df_fltr, h_spike_dates, 1)
 
 # ggplotly()
 
@@ -535,7 +535,7 @@ h_spike_dates <- CRHMr::findSpikesStdevWindow(h_df_fltr,
                                               include_start_end = F
 )
 
-CRHMr::plotFlags(h_df_fltr, h_spike_dates, 1)
+# CRHMr::plotFlags(h_df_fltr, h_spike_dates, 1)
 
 # ggplotly()
 
@@ -569,7 +569,7 @@ h_spike_dates <- CRHMr::findSpikesStdevWindow(h_df_fltr,
                                               include_start_end = F
 )
 
-CRHMr::plotFlags(h_df_fltr, h_spike_dates, 1)
+# CRHMr::plotFlags(h_df_fltr, h_spike_dates, 1)
 
 # ggplotly()
 
@@ -604,10 +604,10 @@ bad_times <- c(
 h_out <- h_df_fltr |> 
   filter(!datetime %in% bad_times)
 
-ggplot(h_out, aes(datetime, H)) +
-  geom_line()
-
-ggplotly()
+# ggplot(h_out, aes(datetime, H)) +
+#   geom_line()
+# 
+# ggplotly()
 
 ## U star Friction Velocity ----
 
@@ -678,8 +678,8 @@ u_star_out <- u_star_df |>
 tau_df <- global_var_fltrd |> 
   select(datetime, Tau) 
 
-tau_df |>
-  ggplot(aes(datetime, Tau)) + geom_line()
+# tau_df |>
+#   ggplot(aes(datetime, Tau)) + geom_line()
 # 
 # plotly::ggplotly()
 
@@ -693,9 +693,9 @@ tau_out <- tau_df |>
   filter(is.na(Tau) == F) |>
   select(datetime, Tau)
 
-ggplot(tau_out, aes(datetime, Tau)) + geom_line()
-
-ggplotly()
+# ggplot(tau_out, aes(datetime, Tau)) + geom_line()
+# 
+# ggplotly()
 
 ### spike detection ----
 
@@ -743,10 +743,10 @@ wnd_df <- global_var_fltrd |>
 mid_tree_wind <- met |> select(datetime, wind_speed = u) |> 
   mutate(group = 'mid_tree')
 
-rbind(wnd_df |> mutate(group = 'high_tower'), mid_tree_wind) |>
-  ggplot(aes(datetime, wind_speed, colour = group)) + geom_line()
-
-plotly::ggplotly()
+# rbind(wnd_df |> mutate(group = 'high_tower'), mid_tree_wind) |>
+#   ggplot(aes(datetime, wind_speed, colour = group)) + geom_line()
+# 
+# plotly::ggplotly()
 
 ### spike detection ----
 

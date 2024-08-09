@@ -85,9 +85,9 @@ Confirmed again on Aug 23, 2023, using Iphone compass with true north selected o
 ```{r}
 ec_direction_raw <- 120 # using suunto compass with 18 deg declination
 suunto_declination <- 18 # from compass for Vancouver 2018
-calg_declination <- 14 # for calgary from https://www.ncei.noaa.gov/maps/historical_declination/
-dir_mag_raw <- ec_direction_raw + suunto_declination
-ec_dir_final <- dir_mag_raw - calg_declination 
+calg_declination <- 13.5 # for calgary from https://www.ncei.noaa.gov/maps/historical_declination/
+dir_mag_raw <- ec_direction_raw + suunto_declination # offset from magnetic north
+ec_dir_final <- dir_mag_raw - calg_declination # offset from truenorth 
 ```
 
 The North Offset is:

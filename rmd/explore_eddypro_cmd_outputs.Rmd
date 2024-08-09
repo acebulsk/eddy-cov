@@ -24,10 +24,51 @@ getwd()
 #               '../data/eddy_pro_output/eddypro_2016_calibrated_pars_full_output_2022-11-08T164432_exp.csv',
 #               '../data/eddy_pro_output/eddypro_2016_calibrated_pars_full_output_2023-01-10T204008_exp.csv')
 
-ec_df <- readRDS('../data/low-tower/low_tower_15min_2021_2023.rds')
+ep_files <- c('../eddy-pro-cmd/data/output/eddypro_2016_calibrated_pars_full_output_2023-09-01T120102_exp.csv',
+              '../eddy-pro-cmd/data/output/eddypro_2016_calibrated_pars_full_output_2023-09-01T170105_exp.csv'
+              )
 
-ec_df_logr <- readRDS('../../met-data-processing/data/ec_logr_15min_avg_low.rds') |> 
-  mutate(LE = -LE)
+ec_df_new <- purrr::map_dfr(ep_files, read.csv, skip = 1) |> 
+  filter(!filename %in% c('not_enough_data', '')) |> 
+  mutate(
+    datetime = as.POSIXct(paste(date, time), tz = 'Etc/GMT+6'),
+    across(DOY:w.h2o_cov, as.numeric)) |> 
+  select(datetime,
+         u_star = u.,
+         Tau:qc_h2o_flux, 
+         air_temperature, 
+         air_pressure, 
+         water_vapor_density,
+         wind_speed,
+         max_wind_speed, 
+         wind_dir_mag = wind_dir, 
+         used_records) |> 
+  arrange(datetime)
+
+ep_files <- c('../eddy-pro-cmd/data/output/eddypro_2016_calibrated_pars_full_output_2023-03-29T104926_exp.csv',
+              '../eddy-pro-cmd/data/output/eddypro_2016_calibrated_pars_full_output_2023-03-29T122318_exp.csv',
+              '../data/eddy_pro_output/eddypro_2016_calibrated_pars_full_output_2022-11-08T164432_exp.csv',
+              '../data/eddy_pro_output/eddypro_2016_calibrated_pars_full_output_2023-01-10T204008_exp.csv')
+
+ec_df_old <- purrr::map_dfr(ep_files, read.csv, skip = 1) |> 
+  filter(!filename %in% c('not_enough_data', '')) |> 
+  mutate(
+    datetime = as.POSIXct(paste(date, time), tz = 'Etc/GMT+6'),
+    across(DOY:w.h2o_cov, as.numeric)) |> 
+  select(datetime,
+         u_star = u.,
+         Tau:qc_h2o_flux, 
+         air_temperature, 
+         air_pressure, 
+         water_vapor_density,
+         wind_speed,
+         max_wind_speed, 
+         wind_dir_mag = wind_dir, 
+         used_records) |> 
+  arrange(datetime)
+
+# ec_df_logr <- readRDS('../../met-data-processing/data/ec_logr_15min_avg_low.rds') |> 
+#   mutate(LE = -LE)
 
 # raw
 
@@ -37,7 +78,7 @@ ec_df_logr <- readRDS('../../met-data-processing/data/ec_logr_15min_avg_low.rds'
 
 # 15 m EC data
 
-ec_15m_logr <- readRDS('../../met-data-processing/data/waterloo_1000_ec_main.rds')
+# ec_15m_logr <- readRDS('../../met-data-processing/data/waterloo_1000_ec_main.rds')
 
 # met data from all loggers 
 met <- readRDS('../../met-data-processing/data/ffr_t_rh_u_qaqc_fill.rds') 
@@ -48,45 +89,48 @@ met <- readRDS('../../met-data-processing/data/ffr_t_rh_u_qaqc_fill.rds')
 
 ```{r, echo=FALSE, warning=FALSE}
 
-ec_3m_post_long <- ec_df |> 
+ec_3m_old_long <- ec_df_old |> 
 pivot_longer(!datetime)
 
-ec_3m_logr_long <- ec_df_logr |> 
+ec_3m_new_long <- ec_df_new |> 
 pivot_longer(!datetime)
 
-ec_15m_logr_long <- ec_15m_logr |> 
-pivot_longer(!datetime)
+# ec_3m_logr_long <- ec_df_logr |> 
+# pivot_longer(!datetime)
+# 
+# ec_15m_logr_long <- ec_15m_logr |> 
+# pivot_longer(!datetime)
 
 met_long <- met |> 
 pivot_longer(!datetime)
 
-df <- rbind(ec_3m_post_long, ec_3m_logr_long, ec_15m_logr_long, met_long)
+df <- rbind(ec_3m_old_long, ec_3m_new_long)
 
 col_names <- unique(df$name)
 
-min_time_15 <- max(c(min(ec_3m_post_long$datetime)))
-max_time_15 <- min(c(max(ec_3m_post_long$datetime)))
+min_time_15 <- max(c(min(ec_3m_old_long$datetime)))
+max_time_15 <- min(c(max(ec_3m_old_long$datetime)))
 
 inputPanel(
-  selectInput(inputId = 'ec_3m_post_var', 
-            label = '3 m EC Post Processed Variables: ', 
-            choices = unique(ec_3m_post_long$name), 
+  selectInput(inputId = 'ec_3m_new_var', 
+            label = '3 m EC New Processed Variables: ', 
+            choices = unique(ec_3m_new_long$name), 
             selected = c("LE"), 
             multiple = F),
-    selectInput(inputId = 'ec_3m_logr_var', 
-            label = '3 m EC Logger Variables: ', 
-            choices = unique(ec_3m_logr_long$name), 
+    selectInput(inputId = 'ec_3m_old_var', 
+            label = '3 m EC Old Processed Variables: ', 
+            choices = unique(ec_3m_old_long$name), 
             selected = c("LE"), 
             multiple = F),
-selectInput(inputId = 'ec_15m_logr_var', 
-            label = '15 m EC Logger Variables: ', 
-            choices = unique(ec_15m_logr_long$name), 
-            selected = c("LE_irga"), 
-            multiple = F),
-selectInput(inputId = 'met_var', 
-            label = 'Met Tower Variables: ', 
-            choices = unique(met_long$name), 
-            selected = c("air_temp"), multiple = T),
+# selectInput(inputId = 'ec_15m_logr_var', 
+#             label = '15 m EC Logger Variables: ', 
+#             choices = unique(ec_15m_logr_long$name), 
+#             selected = c("LE_irga"), 
+#             multiple = F),
+# selectInput(inputId = 'met_var', 
+#             label = 'Met Tower Variables: ', 
+#             choices = unique(met_long$name), 
+#             selected = c("air_temp"), multiple = T),
 numericInput(
   inputId = 'fig_height',
   label = 'Figure Height in Pixels:',
@@ -116,56 +160,40 @@ sliderInput(inputId = "sliderTimeRange", label = "",
 ```
 
 ```{r, echo=FALSE}
-ec_3m_post_long_fltr <-  reactive({
-req(input$ec_3m_post_var)
+ec_3m_new_long_fltr <-  reactive({
+req(input$ec_3m_new_var)
 req(input$sliderTimeRange)
 
-ec_3m_post_long |> 
-  filter(name %in% c(input$ec_3m_post_var),
+ec_3m_new_long |> 
+  filter(name %in% c(input$ec_3m_new_var),
         datetime >= input$sliderTimeRange[1] & datetime <= input$sliderTimeRange[2],
         value < input$th_hi,
         value > input$th_low) |> 
-  mutate(group = paste0('3m_post_', input$ec_3m_post_var))
+  mutate(group = paste0('3m_post_', input$ec_3m_new_var))
 })
 
 ```
 
 ```{r, echo=FALSE}
-ec_3m_logr_long_fltr <-  reactive({
-req(input$ec_3m_logr_var)
+ec_3m_old_long_fltr <-  reactive({
+req(input$ec_3m_old_var)
 req(input$sliderTimeRange)
 
-ec_3m_logr_long |> 
-  filter(name %in% c(input$ec_3m_logr_var),
+ec_3m_old_long |> 
+  filter(name %in% c(input$ec_3m_old_var),
         datetime >= input$sliderTimeRange[1] & datetime <= input$sliderTimeRange[2],
         value < input$th_hi,
         value > input$th_low) |> 
-  mutate(group = paste0('3m_logr_', input$ec_3m_logr_var))
-})
-
-```
-
-```{r, echo=FALSE}
-ec_15m_logr_long_fltr <-  reactive({
-req(input$ec_15m_logr_var)
-req(input$sliderTimeRange)
-
-ec_15m_logr_long |> 
-  filter(name %in% c(input$ec_15m_logr_var),
-        datetime >= input$sliderTimeRange[1] & datetime <= input$sliderTimeRange[2],
-        value < input$th_hi,
-        value > input$th_low) |> 
-  mutate(group = paste0('15m_logr_', input$ec_15m_logr_var))
+  mutate(group = paste0('3m_logr_', input$ec_3m_old_var))
 })
 
 ```
 
 ```{r, echo=FALSE}
 ec_bind <-  reactive({
-req(ec_15m_logr_long_fltr)
 req(input$sliderTimeRange)
 
-rbind(ec_3m_post_long_fltr(), ec_3m_logr_long_fltr()) |> rbind(ec_15m_logr_long_fltr())
+rbind(ec_3m_old_long_fltr(), ec_3m_new_long_fltr())
 })
 
 ```
@@ -189,7 +217,6 @@ plotOutput('ec_bind_plot', height = input$fig_height)
 
 ```{r, echo=FALSE}
 met_long_fltr <-  reactive({
-req(input$ec_15m_logr_var)
 req(input$sliderTimeRange)
 browser()
 met_long |> 
